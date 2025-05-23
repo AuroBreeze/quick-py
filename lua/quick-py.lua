@@ -96,16 +96,34 @@ if ok then
         root_dir = function(fname)
             return M.cached_root or lspconfig.util.root_pattern('.git', 'pyproject.toml', 'setup.py')(fname)
         end,
+        -- on_new_config = function(new_config, new_root_dir)
+        --     -- 针对每个 workspace 配置 venv
+        --     local _, venv = find_local_venv(new_root_dir)
+        --     if venv then
+        --         local pybin = (vim.fn.has('win32')==1) and (venv..'/Scripts/python.exe') or (venv..'/bin/python')
+        --         if vim.fn.executable(pybin)==1 then
+        --             new_config.cmd = { pybin, '-m', 'pyright-langserver.exe', '--stdio' }
+        --             new_config.settings = new_config.settings or {}
+        --             new_config.settings.python = new_config.settings.python or { analysis = {} }
+        --             new_config.settings.python.analysis.pythonPath = pybin
+        --         end
+        --     end
+        -- end,
         on_new_config = function(new_config, new_root_dir)
             -- 针对每个 workspace 配置 venv
             local _, venv = find_local_venv(new_root_dir)
             if venv then
-                local pybin = (vim.fn.has('win32')==1) and (venv..'/Scripts/python.exe') or (venv..'/bin/python')
-                if vim.fn.executable(pybin)==1 then
-                    new_config.cmd = { pybin, '-m', 'pyright-langserver.exe', '--stdio' }
+                local is_win = vim.fn.has('win32') == 1
+                local cmd_path = is_win
+                    and (venv .. '/Scripts/pyright-langserver.exe')
+                    or (venv .. '/bin/pyright-langserver')
+                if vim.fn.executable(cmd_path) == 1 then
+                    new_config.cmd = { cmd_path, '--stdio' }
                     new_config.settings = new_config.settings or {}
                     new_config.settings.python = new_config.settings.python or { analysis = {} }
-                    new_config.settings.python.analysis.pythonPath = pybin
+                    new_config.settings.python.analysis.pythonPath = is_win
+                        and (venv .. '/Scripts/python.exe')
+                        or (venv .. '/bin/python')
                 end
             end
         end,
