@@ -37,7 +37,7 @@ function M.activate_venv()
     local buf_dir = vim.fn.expand('%:p:h')
     local root_dir, venv = find_local_venv(buf_dir)
     if not root_dir then
-        vim.notify("[quick-py] 未找到 .venv 或 venv", vim.log.levels.WARN)
+        vim.notify("[venvfinder] 未找到 .venv 或 venv", vim.log.levels.WARN)
         return nil
     end
     -- 如果已缓存同一项目无需重复
@@ -48,7 +48,7 @@ function M.activate_venv()
     venv = venv:gsub('\\', '/'):gsub('/+$', '')
     local pybin = vim.fn.has('win32')==1 and (venv..'/Scripts/python.exe') or (venv..'/bin/python')
     if vim.fn.executable(pybin)==0 then
-        vim.notify("[quick-py] Python 不可执行: "..pybin, vim.log.levels.ERROR)
+        vim.notify("[venvfinder] Python 不可执行: "..pybin, vim.log.levels.ERROR)
         return nil
     end
     -- 设置环境变量与全局 Python
@@ -59,7 +59,7 @@ function M.activate_venv()
     -- 缓存项目根与 venv
     M.cached_root = root_dir
     M.cached_venv_dir = venv
-    vim.notify("[quick-py] 已激活虚拟环境: "..venv, vim.log.levels.INFO)
+    vim.notify("[venvfinder] 已激活虚拟环境: "..venv, vim.log.levels.INFO)
     return venv
 end
 
@@ -96,34 +96,16 @@ if ok then
         root_dir = function(fname)
             return M.cached_root or lspconfig.util.root_pattern('.git', 'pyproject.toml', 'setup.py')(fname)
         end,
-        -- on_new_config = function(new_config, new_root_dir)
-        --     -- 针对每个 workspace 配置 venv
-        --     local _, venv = find_local_venv(new_root_dir)
-        --     if venv then
-        --         local pybin = (vim.fn.has('win32')==1) and (venv..'/Scripts/python.exe') or (venv..'/bin/python')
-        --         if vim.fn.executable(pybin)==1 then
-        --             new_config.cmd = { pybin, '-m', 'pyright-langserver.exe', '--stdio' }
-        --             new_config.settings = new_config.settings or {}
-        --             new_config.settings.python = new_config.settings.python or { analysis = {} }
-        --             new_config.settings.python.analysis.pythonPath = pybin
-        --         end
-        --     end
-        -- end,
         on_new_config = function(new_config, new_root_dir)
             -- 针对每个 workspace 配置 venv
             local _, venv = find_local_venv(new_root_dir)
             if venv then
-                local is_win = vim.fn.has('win32') == 1
-                local cmd_path = is_win
-                    and (venv .. '/Scripts/pyright-langserver.exe')
-                    or (venv .. '/bin/pyright-langserver')
-                if vim.fn.executable(cmd_path) == 1 then
-                    new_config.cmd = { cmd_path, '--stdio' }
+                local pybin = (vim.fn.has('win32')==1) and (venv..'/Scripts/python.exe') or (venv..'/bin/python')
+                if vim.fn.executable(pybin)==1 then
+                    new_config.cmd = { pybin, '-m', 'pyright_langserver', '--stdio' }
                     new_config.settings = new_config.settings or {}
                     new_config.settings.python = new_config.settings.python or { analysis = {} }
-                    new_config.settings.python.analysis.pythonPath = is_win
-                        and (venv .. '/Scripts/python.exe')
-                        or (venv .. '/bin/python')
+                    new_config.settings.python.analysis.pythonPath = pybin
                 end
             end
         end,
@@ -133,7 +115,7 @@ end
 -- 运行 Python 命令
 vim.api.nvim_create_user_command('RunPython', function()
     if not config.python_path then
-        vim.notify("[quick-py] 未激活虚拟环境", vim.log.levels.ERROR)
+        vim.notify("[venvfinder] 未激活虚拟环境", vim.log.levels.ERROR)
         return
     end
     local cmd = config.python_path..' '..vim.fn.shellescape(vim.fn.expand('%:p'))
