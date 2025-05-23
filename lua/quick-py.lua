@@ -37,7 +37,7 @@ function M.activate_venv()
     local buf_dir = vim.fn.expand('%:p:h')
     local root_dir, venv = find_local_venv(buf_dir)
     if not root_dir then
-        vim.notify("[venvfinder] 未找到 .venv 或 venv", vim.log.levels.WARN)
+        vim.notify("[quick-py] 未找到 .venv 或 venv", vim.log.levels.WARN)
         return nil
     end
     -- 如果已缓存同一项目无需重复
@@ -48,7 +48,7 @@ function M.activate_venv()
     venv = venv:gsub('\\', '/'):gsub('/+$', '')
     local pybin = vim.fn.has('win32')==1 and (venv..'/Scripts/python.exe') or (venv..'/bin/python')
     if vim.fn.executable(pybin)==0 then
-        vim.notify("[venvfinder] Python 不可执行: "..pybin, vim.log.levels.ERROR)
+        vim.notify("[quick-py] Python 不可执行: "..pybin, vim.log.levels.ERROR)
         return nil
     end
     -- 设置环境变量与全局 Python
@@ -59,7 +59,7 @@ function M.activate_venv()
     -- 缓存项目根与 venv
     M.cached_root = root_dir
     M.cached_venv_dir = venv
-    vim.notify("[venvfinder] 已激活虚拟环境: "..venv, vim.log.levels.INFO)
+    vim.notify("[quick-py] 已激活虚拟环境: "..venv, vim.log.levels.INFO)
     return venv
 end
 
@@ -115,7 +115,7 @@ end
 -- 运行 Python 命令
 vim.api.nvim_create_user_command('RunPython', function()
     if not config.python_path then
-        vim.notify("[venvfinder] 未激活虚拟环境", vim.log.levels.ERROR)
+        vim.notify("[quick-py] 未激活虚拟环境", vim.log.levels.ERROR)
         return
     end
     local cmd = config.python_path..' '..vim.fn.shellescape(vim.fn.expand('%:p'))
