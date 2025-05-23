@@ -102,7 +102,7 @@ if ok then
             if venv then
                 local pybin = (vim.fn.has('win32')==1) and (venv..'/Scripts/python.exe') or (venv..'/bin/python')
                 if vim.fn.executable(pybin)==1 then
-                    new_config.cmd = { pybin, '-m', 'pyright-langserver', '--stdio' }
+                    new_config.cmd = { pybin, '-m', 'pyright-langserver.exe', '--stdio' }
                     new_config.settings = new_config.settings or {}
                     new_config.settings.python = new_config.settings.python or { analysis = {} }
                     new_config.settings.python.analysis.pythonPath = pybin
