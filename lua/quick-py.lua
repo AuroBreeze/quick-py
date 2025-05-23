@@ -1,17 +1,3 @@
--- 插件目录结构示例：
--- 
--- venvfinder/                    # 仓库根目录
--- ├── plugin/                   
--- │   └── venvfinder.lua         # 在 plugin 目录下自动加载，内容为：
--- │       vim.cmd [[packadd! venvfinder]]
--- │       require('venvfinder').setup()
--- ├── lua/
--- │   └── venvfinder/
--- │       └── init.lua           # 本文件，核心逻辑
--- ├── README.md                  # 插件介绍及使用说明
--- ├── LICENSE                    # 开源协议
--- └── .gitignore                 # 忽略文件
-
 local M = {}
 local config = {
     venv_names = { ".venv", "venv" },
@@ -55,14 +41,20 @@ function M.activate_venv()
     if M.cached_root == root_dir and config.python_path then
         return M.cached_venv_dir
     end
+
     local is_win = vim.fn.has('win32') == 1
-    -- 统一路径格式，Windows 使用反斜杠，其它使用正斜杠
+    -- 统一路径格式：Windows 将所有 '/' 转为 '\', 并去除多余斜杠
     if is_win then
-        venv = venv:gsub('[\\/]+$', '')
+        -- 将所有正斜杠替换为反斜杠
+        venv = venv:gsub('/', '\\')
+        -- 去除路径末尾多余的反斜杠
+        venv = venv:gsub('\\+$', '')
     else
+        -- 保持 Unix 风格
         venv = venv:gsub('\\', '/')
                    :gsub('/+$', '')
     end
+
     local pybin = is_win
         and (venv .. '\\Scripts\\python.exe')
         or (venv .. '/bin/python')
@@ -102,8 +94,10 @@ vim.api.nvim_create_autocmd('TermOpen', {
         local chan = vim.b.terminal_job_id
         if venv and chan then
             if vim.fn.has('win32') == 1 then
-                vim.fn.chansend(chan, venv .. '\\Scripts\\activate.bat\r')
+                -- Windows 下激活脚本
+                vim.fn.chansend(chan, '"' .. venv .. '\\Scripts\\activate.bat"\r')
             else
+                -- Unix 下 source 激活
                 vim.fn.chansend(chan, 'source ' .. venv .. '/bin/activate\n')
             end
         end
@@ -117,6 +111,10 @@ if ok then
         local _, venv = find_local_venv(root_dir)
         if venv then
             local is_win = vim.fn.has('win32') == 1
+            -- Windows 将斜杠替换
+            if is_win then
+                venv = venv:gsub('/', '\\'):gsub('\\+$', '')
+            end
             -- 设置 pyright-langserver 可执行路径
             local server = is_win
                 and (venv .. '\\Scripts\\pyright-langserver.exe')
