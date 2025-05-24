@@ -151,20 +151,20 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
 })
 
 -- Python 文件打开/切换时激活
-vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
-    pattern = '*.py',
-    group = aug,
-    callback = function()
-        M.activate_venv()
-        -- 检查是否已有活跃的 Pyright 客户端
-        local clients = vim.lsp.get_active_clients({ name = 'pyright' })
-        if #clients == 0 then
-            vim.defer_fn(function()
-                require('lspconfig').pyright.launch()
-            end, 200)
-        end
-    end 
-})
+-- vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
+--     pattern = '*.py',
+--     group = aug,
+--      callback = function()
+--         M.activate_venv()
+--         -- 延迟 200ms 后启动 LSP
+--         vim.defer_fn(function()
+--             vim.lsp.stop_client(vim.lsp.get_active_clients({ name = 'pyright' }))
+--             require('lspconfig').pyright.launch()
+--         end, 200)
+
+--         -- 激活虚拟环境
+--     end
+-- })
 
 
 -- 运行当前 Python 文件命令
