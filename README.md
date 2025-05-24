@@ -32,6 +32,12 @@ return {
 use { "AuroBreeze/quick-py", requires = { "ahmedkhalf/project.nvim", "neovim/nvim-lspconfig" } }
 ```
 
+
+## Usage
+
+> [!Notion]
+> 请在项目文件夹下打开`nvim`，防止其他错误出现。
+
 ## Contribution
 > 欢迎大家提出建议和意见，帮助完善这个插件。
 
