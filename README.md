@@ -35,7 +35,7 @@ use { "AuroBreeze/quick-py", requires = { "ahmedkhalf/project.nvim", "neovim/nvi
 
 ## Usage
 
-> [!Notion]
+> [!NOTE]
 > 请在项目文件夹下打开`nvim`，防止其他错误出现。
 
 ## Contribution
