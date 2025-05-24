@@ -81,7 +81,7 @@ end
 local aug = vim.api.nvim_create_augroup('ActivateVenv', { clear = true })
 
 -- Python 文件打开/切换时激活
-vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
+vim.api.nvim_create_autocmd({ 'BufReadPost'}, {
     pattern = '*.py',
     group = aug,
     callback = M.activate_venv(),
