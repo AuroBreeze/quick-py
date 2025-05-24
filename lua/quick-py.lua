@@ -32,6 +32,10 @@ end
 
 -- 激活虚拟环境并缓存
 function M.activate_venv()
+    if M.cached_venv_dir and vim.fn.executable(config.python_path) == 1 then
+        return M.cached_venv_dir
+    end
+
     local buf_dir = vim.fn.expand('%:p:h')
     local root_dir, venv = find_local_venv(buf_dir)
     if not root_dir then
@@ -85,15 +89,14 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
     pattern = '*.py',
     group = aug,
     callback = function()
-        -- 仅在首次激活时配置 LSP
-        if not M.cached_venv_dir then
-            M.activate_venv()
-            -- 延迟配置 LSP，确保路径更新
-            vim.defer_fn(function()
-                require('lspconfig').pyright.setup({})  -- 重新触发 LSP 初始化
-            end, 100)
-        end
-    end,
+        -- 激活虚拟环境
+        M.activate_venv()
+        -- 延迟 200ms 后启动 LSP
+        vim.defer_fn(function()
+            vim.lsp.stop_client(vim.lsp.get_active_clients({ name = 'pyright' }))
+            require('lspconfig').pyright.launch()
+        end, 200)
+    end
 })
 
 -- 终端打开时激活并 source/activate
