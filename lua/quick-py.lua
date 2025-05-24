@@ -84,7 +84,16 @@ local aug = vim.api.nvim_create_augroup('ActivateVenv', { clear = true })
 vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
     pattern = '*.py',
     group = aug,
-    callback = M.activate_venv,
+    callback = function()
+        -- 仅在首次激活时配置 LSP
+        if not M.cached_venv_dir then
+            M.activate_venv()
+            -- 延迟配置 LSP，确保路径更新
+            vim.defer_fn(function()
+                require('lspconfig').pyright.setup({})  -- 重新触发 LSP 初始化
+            end, 100)
+        end
+    end,
 })
 
 -- 终端打开时激活并 source/activate
@@ -140,10 +149,10 @@ vim.api.nvim_create_autocmd({'BufReadPost', 'BufNewFile'}, {
                     if venv then
                         local is_win = vim.fn.has('win32')
                         if is_win == 1 then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
-                        local python = is_win and (venv .. '\\Scripts\\python.exe') or (venv .. '/bin/python')
+                        local python_venv_path = is_win and (venv .. '\\Scripts\\python.exe') or (venv .. '/bin/python')
                         new_config.cmd = { new_config.cmd[1], '--stdio' }
                         new_config.settings = new_config.settings or {}
-                        new_config.settings.python = { analysis = { pythonPath = config.python_path } }
+                        new_config.settings.python = { analysis = { pythonPath = python_venv_path } }
                     end
                 end,
             })
