@@ -89,13 +89,17 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
     pattern = '*.py',
     group = aug,
     callback = function()
+        local clients = vim.lsp.get_active_clients({ name = 'pyright' })
+        if #clients == 0 then
+            M.activate_venv()
+            -- 延迟 200ms 后启动 LSP
+            vim.defer_fn(function()
+                vim.lsp.stop_client(vim.lsp.get_active_clients({ name = 'pyright' }))
+                require('lspconfig').pyright.launch()
+            end, 200)
+        end
         -- 激活虚拟环境
-        M.activate_venv()
-        -- 延迟 200ms 后启动 LSP
-        vim.defer_fn(function()
-            vim.lsp.stop_client(vim.lsp.get_active_clients({ name = 'pyright' }))
-            require('lspconfig').pyright.launch()
-        end, 200)
+
     end
 })
 
