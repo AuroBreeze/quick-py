@@ -2,7 +2,6 @@ local M = {}
 local config = {
     venv_names = { ".venv", "venv" },
     python_path = nil,
-    auto_activate = true,
 }
 
 -- 缓存项目根和 venv 目录
