@@ -6,15 +6,15 @@
 <a href="https://dotfyle.com/AuroBreeze/quick-py-lua-quick-py"><img src="https://dotfyle.com/AuroBreeze/quick-py-lua-quick-py/badges/leaderkey?style=for-the-badge" /></a>
 <a href="https://dotfyle.com/AuroBreeze/quick-py-lua-quick-py"><img src="https://dotfyle.com/AuroBreeze/quick-py-lua-quick-py/badges/plugin-manager?style=for-the-badge" /></a>
 
-## Introduction
-
-`neovim-plugins`一个在`lazyvim`快速使用python的插件
 
 ## Features
 - [x] 终端自动激活虚拟环境
 - [x] 使用虚拟环境的`pyright`进行代码检查
 - [ ] 一键运行代码
-## Install
+
+## Install Instructions
+
+`neovim-plugins`一个在`lazyvim`快速使用python的插件
 
 ### lazy.vim
 
@@ -38,6 +38,11 @@ return {
 use { "AuroBreeze/quick-py", requires = { "ahmedkhalf/project.nvim", "neovim/nvim-lspconfig" } }
 ```
 
+## Plugins
+
+## Language Servers
+
++ pyright
 
 ## Usage
 
