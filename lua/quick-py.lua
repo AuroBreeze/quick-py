@@ -81,10 +81,10 @@ end
 local aug = vim.api.nvim_create_augroup('ActivateVenv', { clear = true })
 
 -- Python 文件打开/切换时激活
-vim.api.nvim_create_autocmd({ 'BufReadPost'}, {
+vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
     pattern = '*.py',
     group = aug,
-    callback = M.activate_venv(),
+    callback = M.activate_venv,
 })
 
 -- 终端打开时激活并 source/activate
@@ -138,11 +138,12 @@ vim.api.nvim_create_autocmd({'BufReadPost', 'BufNewFile'}, {
                 on_new_config = function(new_config, new_root_dir)
                     local _, venv = find_local_venv(new_root_dir)
                     if venv then
-                        if vim.fn.has('win32') == 1 then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
+                        local is_win = vim.fn.has('win32')
+                        if is_win == 1 then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
                         local python = is_win and (venv .. '\\Scripts\\python.exe') or (venv .. '/bin/python')
                         new_config.cmd = { new_config.cmd[1], '--stdio' }
                         new_config.settings = new_config.settings or {}
-                        new_config.settings.python = { analysis = { pythonPath = M.config.python_path } }
+                        new_config.settings.python = { analysis = { pythonPath = config.python_path } }
                     end
                 end,
             })
