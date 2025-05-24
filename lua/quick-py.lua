@@ -52,7 +52,7 @@ function M.activate_venv()
     else
         -- 保持 Unix 风格
         venv = venv:gsub('\\', '/')
-                   :gsub('/+$', '')
+            :gsub('/+$', '')
     end
 
     local pybin = is_win
@@ -81,14 +81,16 @@ end
 local aug = vim.api.nvim_create_augroup('ActivateVenv', { clear = true })
 
 -- Python 文件打开/切换时激活
-vim.api.nvim_create_autocmd({'BufReadPost', 'BufNewFile'}, {
-    pattern = '*.py', group = aug,
-    callback = M.activate_venv,
+vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
+    pattern = '*.py',
+    group = aug,
+    callback = M.activate_venv(),
 })
 
 -- 终端打开时激活并 source/activate
 vim.api.nvim_create_autocmd('TermOpen', {
-    pattern = '*', group = aug,
+    pattern = '*',
+    group = aug,
     callback = function()
         local venv = M.activate_venv()
         local chan = vim.b.terminal_job_id
@@ -104,40 +106,49 @@ vim.api.nvim_create_autocmd('TermOpen', {
     end,
 })
 
--- 配置 Pyright LSP，确保在启动前激活 venv
-local ok, lspconfig = pcall(require, 'lspconfig')
-if ok then
-    lspconfig.pyright.setup({
-        -- 先激活 venv 再获取命令
-        cmd = (function()
-            local root, _ = M.activate_venv()
-            local _, venv = find_local_venv(root or vim.fn.getcwd())
-            local is_win = vim.fn.has('win32') == 1
-            if is_win then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
-            local server = is_win and (venv .. '\\Scripts\\pyright-langserver.exe') or (venv .. '/bin/pyright-langserver')
-            if vim.fn.executable(server) == 1 then
-                return { server, '--stdio' }
-            else
-                return { 'pyright-langserver', '--stdio' }
-            end
-        end)(),
-        root_dir = function(fname)
-            local root, _ = find_local_venv(fname)
-            if root then return root end
-            return lspconfig.util.root_pattern('.git', 'pyproject.toml', 'setup.py')(fname)
-        end,
-        on_new_config = function(new_config, new_root_dir)
-            local _, venv = find_local_venv(new_root_dir)
-            if venv then
-                if vim.fn.has('win32') == 1 then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
-                local python = is_win and (venv .. '\\Scripts\\python.exe') or (venv .. '/bin/python')
-                new_config.cmd = { new_config.cmd[1], '--stdio' }
-                new_config.settings = new_config.settings or {}
-                new_config.settings.python = { analysis = { pythonPath = python } }
-            end
-        end,
-    })
-end
+local au = vim.api.nvim_create_augroup('OpenPythonVenv', { clear = true })
+-- 打开 Python 虚拟环境，并设置lsp
+vim.api.nvim_create_autocmd("LspSet", {
+    pattern = "*.py",
+    group = au,
+    callback = function()
+        -- 配置 Pyright LSP，确保在启动前激活 venv
+        local ok, lspconfig = pcall(require, 'lspconfig')
+        if ok then
+            lspconfig.pyright.setup({
+                -- 先激活 venv 再获取命令
+                cmd = (function()
+                    local root, _ = M.activate_venv()
+                    local _, venv = find_local_venv(root or vim.fn.getcwd())
+                    local is_win = vim.fn.has('win32') == 1
+                    if is_win then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
+                    local server = is_win and (venv .. '\\Scripts\\pyright-langserver.exe') or
+                    (venv .. '/bin/pyright-langserver')
+                    if vim.fn.executable(server) == 1 then
+                        return { server, '--stdio' }
+                    else
+                        return { 'pyright-langserver', '--stdio' }
+                    end
+                end)(),
+                root_dir = function(fname)
+                    local root, _ = find_local_venv(fname)
+                    if root then return root end
+                    return lspconfig.util.root_pattern('.git', 'pyproject.toml', 'setup.py')(fname)
+                end,
+                on_new_config = function(new_config, new_root_dir)
+                    local _, venv = find_local_venv(new_root_dir)
+                    if venv then
+                        if vim.fn.has('win32') == 1 then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
+                        local python = is_win and (venv .. '\\Scripts\\python.exe') or (venv .. '/bin/python')
+                        new_config.cmd = { new_config.cmd[1], '--stdio' }
+                        new_config.settings = new_config.settings or {}
+                        new_config.settings.python = { analysis = { pythonPath = python } }
+                    end
+                end,
+            })
+        end
+    end
+})
 
 
 -- 运行当前 Python 文件命令
