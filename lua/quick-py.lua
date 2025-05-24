@@ -142,7 +142,7 @@ vim.api.nvim_create_autocmd({'BufReadPost', 'BufNewFile'}, {
                         local python = is_win and (venv .. '\\Scripts\\python.exe') or (venv .. '/bin/python')
                         new_config.cmd = { new_config.cmd[1], '--stdio' }
                         new_config.settings = new_config.settings or {}
-                        new_config.settings.python = { analysis = { pythonPath = vim.g.python3_host_prog } }
+                        new_config.settings.python = { analysis = { pythonPath = M.config.python_path } }
                     end
                 end,
             })
