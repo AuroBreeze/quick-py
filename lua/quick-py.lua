@@ -107,7 +107,7 @@ vim.api.nvim_create_autocmd('TermOpen', {
 
 local au = vim.api.nvim_create_augroup('OpenPythonVenv', { clear = true })
 -- 打开 Python 虚拟环境，并设置lsp
-vim.api.nvim_create_autocmd({'BufReadPost', 'BufNewFile'}, {
+vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
     pattern = "*.py",
     group = au,
     callback = function()
@@ -122,7 +122,7 @@ vim.api.nvim_create_autocmd({'BufReadPost', 'BufNewFile'}, {
                     local is_win = vim.fn.has('win32') == 1
                     if is_win then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
                     local server = is_win and (venv .. '\\Scripts\\pyright-langserver.exe') or
-                    (venv .. '/bin/pyright-langserver')
+                        (venv .. '/bin/pyright-langserver')
                     if vim.fn.executable(server) == 1 then
                         return { server, '--stdio' }
                     else
@@ -140,7 +140,7 @@ vim.api.nvim_create_autocmd({'BufReadPost', 'BufNewFile'}, {
                         local is_win = vim.fn.has('win32')
                         if is_win == 1 then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
                         local python_venv_path = is_win and (venv .. '\\Scripts\\python.exe') or (venv .. '/bin/python')
-                        new_config.cmd = {new_config.cmd[1], '--stdio' }
+                        new_config.cmd = { new_config.cmd[1], '--stdio' }
                         new_config.settings = new_config.settings or {}
                         new_config.settings.python = { analysis = { pythonPath = python_venv_path } }
                     end
@@ -155,17 +155,14 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
     pattern = '*.py',
     group = aug,
     callback = function()
-        local clients = vim.lsp.get_active_clients({ name = 'pyright' })
-        if #clients == 0 then
-            M.activate_venv()
-            -- 延迟 200ms 后启动 LSP
-            vim.defer_fn(function()
-                vim.lsp.stop_client(vim.lsp.get_active_clients({ name = 'pyright' }))
-                require('lspconfig').pyright.launch()
-            end, 200)
-        end
-        -- 激活虚拟环境
+        M.activate_venv()
+        -- 延迟 200ms 后启动 LSP
+        vim.defer_fn(function()
+            vim.lsp.stop_client(vim.lsp.get_active_clients({ name = 'pyright' }))
+            require('lspconfig').pyright.launch()
+        end, 200)
 
+        -- 激活虚拟环境
     end
 })
 
