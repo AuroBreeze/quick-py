@@ -108,7 +108,7 @@ vim.api.nvim_create_autocmd('TermOpen', {
 
 local au = vim.api.nvim_create_augroup('OpenPythonVenv', { clear = true })
 -- 打开 Python 虚拟环境，并设置lsp
-vim.api.nvim_create_autocmd("LspSet", {
+vim.api.nvim_create_autocmd({'BufReadPost', 'BufNewFile'}, {
     pattern = "*.py",
     group = au,
     callback = function()
