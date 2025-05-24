@@ -1,5 +1,11 @@
 # Quick-Py
 
+## quick-py/lua/quick-py
+
+<a href="https://dotfyle.com/AuroBreeze/quick-py-lua-quick-py"><img src="https://dotfyle.com/AuroBreeze/quick-py-lua-quick-py/badges/plugins?style=for-the-badge" /></a>
+<a href="https://dotfyle.com/AuroBreeze/quick-py-lua-quick-py"><img src="https://dotfyle.com/AuroBreeze/quick-py-lua-quick-py/badges/leaderkey?style=for-the-badge" /></a>
+<a href="https://dotfyle.com/AuroBreeze/quick-py-lua-quick-py"><img src="https://dotfyle.com/AuroBreeze/quick-py-lua-quick-py/badges/plugin-manager?style=for-the-badge" /></a>
+
 ## Introduction
 
 `neovim-plugins`一个在`lazyvim`快速使用python的插件
