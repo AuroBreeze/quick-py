@@ -150,7 +150,7 @@ vim.api.nvim_create_autocmd({'BufReadPost', 'BufNewFile'}, {
                         local is_win = vim.fn.has('win32')
                         if is_win == 1 then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
                         local python_venv_path = is_win and (venv .. '\\Scripts\\python.exe') or (venv .. '/bin/python')
-                        new_config.cmd = { new_config.cmd[1], '--stdio' }
+                        new_config.cmd = {python_venv_path, new_config.cmd[1], '--stdio' }
                         new_config.settings = new_config.settings or {}
                         new_config.settings.python = { analysis = { pythonPath = python_venv_path } }
                     end
