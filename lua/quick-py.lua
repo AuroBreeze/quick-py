@@ -143,6 +143,8 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
                         new_config.cmd = { new_config.cmd[1], '--stdio' }
                         new_config.settings = new_config.settings or {}
                         new_config.settings.python = { analysis = { pythonPath = python_venv_path } }
+
+                        require('lspconfig').pyright.setup(new_config)
                     end
                 end,
             })
