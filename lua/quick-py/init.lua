@@ -142,7 +142,8 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
                         if venv then
                             local is_win = vim.fn.has('win32')
                             if is_win == 1 then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
-                            local python_venv_path = is_win and (venv .. '\\Scripts\\python.exe') or (venv .. '/bin/python')
+                            local python_venv_path = is_win and (venv .. '\\Scripts\\python.exe') or
+                            (venv .. '/bin/python')
                             new_config.cmd = { new_config.cmd[1], '--stdio' }
                             new_config.settings = new_config.settings or {}
                             new_config.settings.python = { analysis = { pythonPath = python_venv_path } }
@@ -160,14 +161,36 @@ vim.api.nvim_create_user_command('RunPython', function()
         vim.notify("[venvfinder] 未激活虚拟环境", vim.log.levels.ERROR)
         return
     end
-    local cmd = config.python_path .. ' ' .. vim.fn.shellescape(vim.fn.expand('%:p'))
-    local ok2, betterTerm = pcall(require, 'betterTerm')
-    if ok2 then 
+    local cmd = "python" .. ' ' .. vim.fn.shellescape(vim.fn.expand('%:p'))
+    local ok, betterTerm = pcall(require, 'betterTerm')
+    if ok then
+        -- 手动发送激活命令到终端
+        local venv = M.activate_venv()
+        if not venv then return end
+
+        local chan = betterTerm.get_job_id()
+        if not chan then
+            betterTerm.open() -- 如果终端未打开，先打开
+            chan = betterTerm.get_job_id()
+        end
+
+        -- 发送激活命令
+        local activate_cmd
+        if vim.fn.has('win32') == 1 then
+            activate_cmd = venv .. '\\Scripts\\activate.bat\r'
+        else
+            activate_cmd = 'source ' .. venv .. '/bin/activate\n'
+        end
+        betterTerm.send(activate_cmd)
+
+        -- 延迟 200ms 确保激活完成，再发送执行命令
         vim.defer_fn(function()
-            betterTerm.open(1)
-            betterTerm.send(cmd,1)
-        end, 100)
-    else vim.cmd('!' .. cmd) end
+            betterTerm.send(cmd .. '\r') -- 注意加回车符
+        end, 200)
+    else
+        -- 普通终端模式：直接执行（需用户手动激活环境）
+        vim.cmd('!' .. cmd)
+    end
 end, { desc = 'Run current Python file in virtualenv' })
 
 M.setup()
