@@ -164,6 +164,7 @@ vim.api.nvim_create_user_command('RunPython', function()
     local ok2, betterTerm = pcall(require, 'betterTerm')
     if ok2 then 
         vim.defer_fn(function()
+            betterTerm.open()
             betterTerm.send(cmd)
         end, 100)
     else vim.cmd('!' .. cmd) end
