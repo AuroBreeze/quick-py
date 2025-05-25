@@ -101,7 +101,7 @@ vim.api.nvim_create_autocmd('TermOpen', {
                 else
                     vim.fn.chansend(chan, 'source ' .. venv .. '/bin/activate\n')
                 end
-            end, 100)
+            end, 0)
         end
     end,
 })
