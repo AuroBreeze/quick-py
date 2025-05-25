@@ -164,8 +164,7 @@ vim.api.nvim_create_user_command('RunPython', function()
     local ok2, betterTerm = pcall(require, 'betterTerm')
     if ok2 then 
         vim.defer_fn(function()
-            betterTerm.open()
-            betterTerm.send(cmd)
+            betterTerm.send(cmd,1)
         end, 100)
     else vim.cmd('!' .. cmd) end
 end, { desc = 'Run current Python file in virtualenv' })
