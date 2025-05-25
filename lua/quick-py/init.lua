@@ -162,7 +162,10 @@ vim.api.nvim_create_user_command('RunPython', function()
     end
     local cmd = config.python_path .. ' ' .. vim.fn.shellescape(vim.fn.expand('%:p'))
     local ok2, betterterm = pcall(require, 'betterterm')
-    if ok2 then betterterm.send(cmd) else vim.cmd('!' .. cmd) end
+    if ok2 then 
+        betterterm.open()
+        vim.fn.chansend(betterterm.job_id, cmd .. '\n')
+    else vim.cmd('!' .. cmd) end
 end, { desc = 'Run current Python file in virtualenv' })
 
 M.setup()
