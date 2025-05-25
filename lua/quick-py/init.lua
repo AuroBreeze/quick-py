@@ -172,17 +172,6 @@ vim.api.nvim_create_user_command('RunPython', function()
         if not chan then
             betterTerm.open(0) -- 如果终端未打开，先打开
         end
-
-        -- 发送激活命令
-        -- local activate_cmd
-        -- if vim.fn.has('win32') == 1 then
-        --     activate_cmd = venv .. '\\Scripts\\activate.bat\r'
-        -- else
-        --     activate_cmd = 'source ' .. venv .. '/bin/activate\n'
-        -- end
-        -- betterTerm.send(activate_cmd,0)
-
-        -- 延迟 200ms 确保激活完成，再发送执行命令
         vim.defer_fn(function()
             betterTerm.send(cmd .. '\r',0) -- 注意加回车符
         end, 200)
