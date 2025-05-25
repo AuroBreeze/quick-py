@@ -168,10 +168,9 @@ vim.api.nvim_create_user_command('RunPython', function()
         local venv = M.activate_venv()
         if not venv then return end
 
-        local chan = betterTerm.get_job_id()
+        local chan = betterTerm.open(0)
         if not chan then
-            betterTerm.open() -- 如果终端未打开，先打开
-            chan = betterTerm.get_job_id()
+            betterTerm.open(0) -- 如果终端未打开，先打开
         end
 
         -- 发送激活命令
@@ -181,7 +180,7 @@ vim.api.nvim_create_user_command('RunPython', function()
         else
             activate_cmd = 'source ' .. venv .. '/bin/activate\n'
         end
-        betterTerm.send(activate_cmd)
+        betterTerm.send(activate_cmd,0)
 
         -- 延迟 200ms 确保激活完成，再发送执行命令
         vim.defer_fn(function()
