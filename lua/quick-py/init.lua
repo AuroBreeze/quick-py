@@ -184,7 +184,7 @@ vim.api.nvim_create_user_command('RunPython', function()
 
         -- 延迟 200ms 确保激活完成，再发送执行命令
         vim.defer_fn(function()
-            betterTerm.send(cmd .. '\r') -- 注意加回车符
+            betterTerm.send(cmd .. '\r',0) -- 注意加回车符
         end, 200)
     else
         -- 普通终端模式：直接执行（需用户手动激活环境）
