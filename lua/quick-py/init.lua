@@ -186,6 +186,8 @@ vim.api.nvim_create_user_command('RunPython', function()
         vim.defer_fn(function()
             betterTerm.send(cmd .. '\r',0) -- 注意加回车符
         end, 200)
+
+        betterTerm.open(0)
     else
         -- 普通终端模式：直接执行（需用户手动激活环境）
         vim.cmd('!' .. cmd)
