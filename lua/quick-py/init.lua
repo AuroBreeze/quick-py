@@ -183,5 +183,7 @@ vim.api.nvim_create_user_command('RunPython', function()
     end
 end, { desc = 'Run current Python file in virtualenv' })
 
+vim.keymap.set("n", "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" })
+
 M.setup()
 return M
