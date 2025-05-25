@@ -101,7 +101,7 @@ vim.api.nvim_create_autocmd('TermOpen', {
                 else
                     vim.fn.chansend(chan, 'source ' .. venv .. '/bin/activate\n')
                 end
-            end, 0)
+            end, 50)
         end
     end,
 })
@@ -163,7 +163,7 @@ vim.api.nvim_create_user_command('RunPython', function()
     local cmd = config.python_path .. ' ' .. vim.fn.shellescape(vim.fn.expand('%:p'))
     local ok2, betterTerm = pcall(require, 'betterTerm')
     if ok2 then 
-        betterTerm.send(cmd)
+        betterTerm.send(cmd,1)
     else vim.cmd('!' .. cmd) end
 end, { desc = 'Run current Python file in virtualenv' })
 
