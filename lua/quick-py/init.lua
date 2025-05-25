@@ -4,16 +4,17 @@ local config = {
     python_path = nil,
 }
 
--- 缓存项目根和 venv 目录
 M.cached_root = nil
 M.cached_venv_dir = nil
 
--- 合并用户配置
 function M.setup(user_config)
+    if user_config and user_config.venv_names then
+        config.venv_names = vim.list_extend(config.venv_names, user_config.venv_names)
+        user_config.venv_names = nil
+    end
     config = vim.tbl_deep_extend("force", config, user_config or {})
 end
 
--- 向上查找 .venv 或 venv，默认从缓冲区所在目录开始
 local function find_local_venv(start_dir)
     local dir = start_dir or vim.fn.expand('%:p:h')
     if dir == '' then dir = vim.fn.getcwd() end
@@ -29,7 +30,6 @@ local function find_local_venv(start_dir)
     return nil, nil
 end
 
--- 激活虚拟环境并缓存
 function M.activate_venv()
     if M.cached_venv_dir and vim.fn.executable(config.python_path) == 1 then
         return M.cached_venv_dir
@@ -41,31 +41,27 @@ function M.activate_venv()
         vim.notify("[venvfinder] 未找到 .venv 或 venv", vim.log.levels.WARN)
         return nil
     end
-    if M.cached_root == root_dir and config.python_path then
-        return M.cached_venv_dir
-    end
 
+    venv = vim.fn.resolve(venv)
+    venv = vim.fn.simplify(venv)
     local is_win = vim.fn.has('win32') == 1
-    -- 统一路径格式：Windows 将所有 '/' 转为 '\', 并去除多余斜杠
     if is_win then
-        -- 将所有正斜杠替换为反斜杠
-        venv = venv:gsub('/', '\\')
-        -- 去除路径末尾多余的反斜杠
-        venv = venv:gsub('\\+$', '')
+        venv = venv:gsub('/', '\\'):gsub('\\+$', '')
     else
-        -- 保持 Unix 风格
-        venv = venv:gsub('\\', '/')
-            :gsub('/+$', '')
+        venv = venv:gsub('\\', '/'):gsub('/+$', '')
     end
 
-    local pybin = is_win
-        and (venv .. '\\Scripts\\python.exe')
-        or (venv .. '/bin/python')
+    if M.cached_venv_dir and M.cached_venv_dir ~= venv then
+        vim.lsp.stop_client(vim.lsp.get_active_clients({ name = 'pyright' }))
+        M.lsp_started = false
+    end
+
+    local pybin = is_win and (venv .. '\\Scripts\\python.exe') or (venv .. '/bin/python')
     if vim.fn.executable(pybin) == 0 then
         vim.notify("[venvfinder] Python 不可执行: " .. pybin, vim.log.levels.ERROR)
         return nil
     end
-    -- 设置环境变量
+
     vim.env.VIRTUAL_ENV = venv
     if is_win then
         vim.env.PATH = venv .. "\\Scripts;" .. vim.env.PATH
@@ -80,12 +76,18 @@ function M.activate_venv()
     return venv
 end
 
--- 创建自动命令组
 local aug = vim.api.nvim_create_augroup('ActivateVenv', { clear = true })
 
+vim.api.nvim_create_autocmd('DirChanged', {
+    pattern = '*',
+    group = aug,
+    callback = function()
+        M.cached_root = nil
+        M.cached_venv_dir = nil
+        config.python_path = nil
+    end,
+})
 
-
--- 终端打开时激活并 source/activate
 vim.api.nvim_create_autocmd('TermOpen', {
     pattern = '*',
     group = aug,
@@ -93,32 +95,30 @@ vim.api.nvim_create_autocmd('TermOpen', {
         local venv = M.activate_venv()
         local chan = vim.b.terminal_job_id
         if venv and chan then
-            if vim.fn.has('win32') == 1 then
-                -- Windows 下激活脚本
-                vim.fn.chansend(chan, '"' .. venv .. '\\Scripts\\activate.bat"\r')
-            else
-                -- Unix 下 source 激活
-                vim.fn.chansend(chan, 'source ' .. venv .. '/bin/activate\n')
-            end
+            vim.defer_fn(function()
+                if vim.fn.has('win32') == 1 then
+                    vim.fn.chansend(chan, '"' .. venv .. '\\Scripts\\activate.bat"\r')
+                else
+                    vim.fn.chansend(chan, 'source ' .. venv .. '/bin/activate\n')
+                end
+            end, 100)
         end
     end,
 })
 
--- local au = vim.api.nvim_create_augroup('OpenPythonVenv', { clear = true })
--- 添加LSP启动标志
 M.lsp_started = false
 
--- 打开 Python 虚拟环境，并设置lsp
 vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
     pattern = "*.py",
     group = aug,
     callback = function()
-        -- 配置 Pyright LSP，确保在启动前激活 venv
+        local venv = M.activate_venv()
+        if not venv then return end
+
         if not M.lsp_started then
             local ok, lspconfig = pcall(require, 'lspconfig')
             if ok then
                 lspconfig.pyright.setup({
-                    -- 先激活 venv 再获取命令
                     cmd = (function()
                         local root, _ = M.activate_venv()
                         local _, venv = find_local_venv(root or vim.fn.getcwd())
@@ -148,32 +148,13 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
                             new_config.settings.python = { analysis = { pythonPath = python_venv_path } }
                         end
                     end,
-            })
-            M.lsp_started = true
-        end
-    end
-end
-})
-
--- Python 文件打开/切换时激活
-vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
-    pattern = '*.py',
-    group = aug,
-     callback = function()
-        M.activate_venv()
-        if not M.lsp_started then
-            -- 延迟 200ms 后启动 LSP
-            vim.defer_fn(function()
-                vim.lsp.stop_client(vim.lsp.get_active_clients({ name = 'pyright' }))
-                require('lspconfig').pyright.launch()
+                })
                 M.lsp_started = true
-            end, 200)
+            end
         end
     end
 })
 
-
--- 运行当前 Python 文件命令
 vim.api.nvim_create_user_command('RunPython', function()
     if not config.python_path then
         vim.notify("[venvfinder] 未激活虚拟环境", vim.log.levels.ERROR)
@@ -181,9 +162,8 @@ vim.api.nvim_create_user_command('RunPython', function()
     end
     local cmd = config.python_path .. ' ' .. vim.fn.shellescape(vim.fn.expand('%:p'))
     local ok2, betterterm = pcall(require, 'betterterm')
-    if ok2 then betterterm.send(cmd,1) else vim.cmd('!' .. cmd) end
+    if ok2 then betterterm.exec(cmd) else vim.cmd('!' .. cmd) end
 end, { desc = 'Run current Python file in virtualenv' })
 
--- 默认加载配置
 M.setup()
 return M
