@@ -2,6 +2,7 @@ local M = {}
 local config = {
     venv_names = { ".venv", "venv" },
     python_path = nil,
+    runserver_cmd = nil, -- 运行自定义python命令 ，例如django： python manage.py runserver
 }
 
 M.cached_root = nil
@@ -161,7 +162,12 @@ vim.api.nvim_create_user_command('RunPython', function()
         vim.notify("[venvfinder] 未激活虚拟环境", vim.log.levels.ERROR)
         return
     end
-    local cmd = "python" .. ' ' .. vim.fn.shellescape(vim.fn.expand('%:p'))
+    local cmd -- 处理自定义命令
+    if config.runserver_cmd then
+        cmd = config.runserver_cmd
+    else 
+        cmd = "python" .. ' ' .. vim.fn.shellescape(vim.fn.expand('%:p'))
+    end
     local ok, betterTerm = pcall(require, 'betterTerm')
     if ok then
         -- 手动发送激活命令到终端
