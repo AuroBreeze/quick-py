@@ -44,6 +44,15 @@ return {
 ```lua
 use { "AuroBreeze/quick-py", requires = { "ahmedkhalf/project.nvim", "neovim/nvim-lspconfig" } }
 ```
+## Configuration
+
+```lua
+opt = {
+    venv_names = { ".venv", "venv" }, -- 虚拟环境名称
+    runserver_cmd = nil, -- 运行自定义python命令 ，例如django： python manage.py runserver
+}
+
+```
 
 ## Plugins
 
