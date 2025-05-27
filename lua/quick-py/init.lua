@@ -75,7 +75,7 @@ function M.get_venv()
     vim.g.python3_host_prog = pybin -- 缓存python路径到全局变量
     M.cached_root = root_dir -- 缓存根目录
     M.cached_venv_dir = venv -- 缓存虚拟环境目录
-    vim.notify("[Quick-py] 已激活虚拟环境: " .. venv, vim.log.levels.INFO)
+    vim.notify("[Quick-py] 已找到虚拟环境: " .. venv, vim.log.levels.INFO)
     return venv
 end
 
@@ -159,8 +159,8 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
 })
 
 vim.api.nvim_create_user_command('RunPython', function()
-    if not config.python_path then
-        vim.notify("[Quick-py] 未激活虚拟环境", vim.log.levels.ERROR)
+    if not vim.env.VIRTUAL_ENV then
+        vim.notify("[Quick-py] 未找到虚拟环境", vim.log.levels.ERROR)
         return
     end
     local cmd -- 处理自定义命令
