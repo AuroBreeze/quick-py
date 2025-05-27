@@ -29,7 +29,7 @@
 return {
     "AuroBreeze/quick-py",
     dependencies={
-        "ahmedkhalf/project.nvim","neovim/nvim-lspconfig"
+        "ahmedkhalf/project.nvim","neovim/nvim-lspconfig","CRAG666/betterTerm.nvim"
     },
     -- lazy =true,
     patterns = { "*.py" },
