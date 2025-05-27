@@ -123,7 +123,8 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
             if ok then
                 lspconfig.pyright.setup({
                     cmd = (function()
-                        local _, venv = find_local_venv(root or vim.fn.getcwd())
+                        -- local _, venv = find_local_venv(root or vim.fn.getcwd())
+                        local venv = vim.env.VIRTUAL_ENV
                         local is_win = vim.fn.has('win32') == 1
                         if is_win then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
                         local server = is_win and (venv .. '\\Scripts\\pyright-langserver.exe') or
@@ -140,7 +141,8 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
                         return lspconfig.util.root_pattern('.git', 'pyproject.toml', 'setup.py')(fname)
                     end,
                     on_new_config = function(new_config, new_root_dir)
-                        local _, venv = find_local_venv(new_root_dir)
+                        -- local _, venv = find_local_venv(new_root_dir)
+                        local venv = vim.env.VIRTUAL_ENV
                         if venv then
                             local is_win = vim.fn.has('win32')
                             if is_win == 1 then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
