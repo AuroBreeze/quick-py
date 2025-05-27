@@ -17,62 +17,64 @@ function M.setup(user_config)
 end
 
 local function find_local_venv(start_dir)
-    local dir = start_dir or vim.fn.expand('%:p:h')
-    if dir == '' then dir = vim.fn.getcwd() end
-    while dir and dir ~= '/' and dir ~= '' do
-        for _, name in ipairs(config.venv_names) do
-            local cand = dir .. '/' .. name
-            if vim.fn.isdirectory(cand) == 1 then
+    local dir = start_dir or vim.fn.expand('%:p:h') -- 获取当前文件所在目录
+    if dir == '' then dir = vim.fn.getcwd() end -- 如果没有就使用当前工作目录
+    while dir and dir ~= '/' and dir ~= '' do -- 递归查找
+        for _, name in ipairs(config.venv_names) do -- 遍历设置的虚拟环境名称
+            local cand = dir .. '/' .. name -- 将虚拟环境名称与目录拼接
+            if vim.fn.isdirectory(cand) == 1 then -- 验证拼接的目录是否存在
                 return dir, cand
             end
         end
-        dir = vim.fn.fnamemodify(dir, ':h')
+        dir = vim.fn.fnamemodify(dir, ':h') -- 获取上一级目录
     end
     return nil, nil
 end
 
-function M.activate_venv()
-    if M.cached_venv_dir and vim.fn.executable(config.python_path) == 1 then
+function M.get_venv()
+    if M.cached_venv_dir and vim.fn.executable(config.python_path) == 1 then -- 缓存的虚拟环境可用
         return M.cached_venv_dir
     end
 
-    local buf_dir = vim.fn.expand('%:p:h')
-    local root_dir, venv = find_local_venv(buf_dir)
+    local buf_dir = vim.fn.expand('%:p:h') -- 获取当前文件所在目录
+    local root_dir, venv = find_local_venv(buf_dir) -- 获取虚拟环境目录
     if not root_dir then
         vim.notify("[Quick-py] 未找到 .venv 或 venv", vim.log.levels.WARN)
         return nil
     end
 
-    venv = vim.fn.resolve(venv)
-    venv = vim.fn.simplify(venv)
-    local is_win = vim.fn.has('win32') == 1
-    if is_win then
+    venv = vim.fn.resolve(venv) -- 将路径展开
+    venv = vim.fn.simplify(venv) -- 处理路径中无用的字符
+    local is_win = vim.fn.has('win32') == 1 -- 判断系统类型
+    if is_win then -- windows系统需要将路径中的分隔符替换为反斜杠
         venv = venv:gsub('/', '\\'):gsub('\\+$', '')
     else
         venv = venv:gsub('\\', '/'):gsub('/+$', '')
     end
 
-    if M.cached_venv_dir and M.cached_venv_dir ~= venv then
+    if M.cached_venv_dir and M.cached_venv_dir ~= venv then  -- 缓存的虚拟环境不匹配
         vim.lsp.stop_client(vim.lsp.get_active_clients({ name = 'pyright' }))
         M.lsp_started = false
     end
 
+    -- 三元条件判断
+    -- 若is_win为true（Windows系统），则路径为venv目录下的\\Scripts\\python.exe 否则（Unix/Linux系统），路径为venv目录下的/bin/python
     local pybin = is_win and (venv .. '\\Scripts\\python.exe') or (venv .. '/bin/python')
-    if vim.fn.executable(pybin) == 0 then
+    if vim.fn.executable(pybin) == 0 then -- 验证python可执行
         vim.notify("[Quick-py] Python 不可执行: " .. pybin, vim.log.levels.ERROR)
         return nil
     end
 
-    vim.env.VIRTUAL_ENV = venv
+    vim.env.VIRTUAL_ENV = venv -- 设置环境变量
     if is_win then
         vim.env.PATH = venv .. "\\Scripts;" .. vim.env.PATH
     else
         vim.env.PATH = venv .. "/bin:" .. vim.env.PATH
     end
-    config.python_path = pybin
-    vim.g.python3_host_prog = pybin
-    M.cached_root = root_dir
-    M.cached_venv_dir = venv
+    config.python_path = pybin -- 缓存python路径
+    vim.g.python3_host_prog = pybin -- 缓存python路径到全局变量
+    M.cached_root = root_dir -- 缓存根目录
+    M.cached_venv_dir = venv -- 缓存虚拟环境目录
     vim.notify("[Quick-py] 已激活虚拟环境: " .. venv, vim.log.levels.INFO)
     return venv
 end
@@ -93,12 +95,12 @@ vim.api.nvim_create_autocmd('TermOpen', {
     pattern = '*',
     group = aug,
     callback = function()
-        local venv = M.activate_venv()
+        local venv = M.get_venv()
         local chan = vim.b.terminal_job_id
         if venv and chan then
-            vim.defer_fn(function()
+            vim.defer_fn(function() -- 延迟执行
                 if vim.fn.has('win32') == 1 then
-                    vim.fn.chansend(chan, '"' .. venv .. '\\Scripts\\activate.bat"\r')
+                    vim.fn.chansend(chan, '"' .. venv .. '\\Scripts\\activate.bat"\r') -- 发送激活命令
                 else
                     vim.fn.chansend(chan, 'source ' .. venv .. '/bin/activate\n')
                 end
@@ -110,27 +112,26 @@ vim.api.nvim_create_autocmd('TermOpen', {
 M.lsp_started = false
 
 vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
-    pattern = "*.py",
+    pattern = "*.py", -- 匹配Python文件
     group = aug,
     callback = function()
-        local venv = M.activate_venv()
-        if not venv then return end
+        local root = M.get_venv() -- 设置环境变量，并返回虚拟环境目录
+        if not root then return end
 
         if not M.lsp_started then
-            local ok, lspconfig = pcall(require, 'lspconfig')
+            local ok, lspconfig = pcall(require, 'lspconfig') -- 加载lspconfig插件
             if ok then
                 lspconfig.pyright.setup({
                     cmd = (function()
-                        local root, _ = M.activate_venv()
                         local _, venv = find_local_venv(root or vim.fn.getcwd())
                         local is_win = vim.fn.has('win32') == 1
                         if is_win then venv = venv:gsub('/', '\\'):gsub('\\+$', '') end
                         local server = is_win and (venv .. '\\Scripts\\pyright-langserver.exe') or
                             (venv .. '/bin/pyright-langserver')
                         if vim.fn.executable(server) == 1 then
-                            return { server, '--stdio' }
+                            return { server, '--stdio' } -- 找到pyright-langserver时，使用配置
                         else
-                            return { 'pyright-langserver', '--stdio' }
+                            return { 'pyright-langserver', '--stdio' } -- 未找到pyright-langserver时，使用默认配置
                         end
                     end)(),
                     root_dir = function(fname)
@@ -171,8 +172,8 @@ vim.api.nvim_create_user_command('RunPython', function()
     local ok, betterTerm = pcall(require, 'betterTerm')
     if ok then
         -- 手动发送激活命令到终端
-        local venv = M.activate_venv()
-        if not venv then return end
+        -- local venv = M.activate_venv()
+        -- if not venv then return end
 
         local chan = betterTerm.open(0)
         if not chan then
