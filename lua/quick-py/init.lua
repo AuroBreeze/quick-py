@@ -111,11 +111,8 @@ vim.api.nvim_create_autocmd('TermOpen', {
 
 M.lsp_started = false
 
-vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
-    pattern = "*.py", -- 匹配Python文件
-    group = aug,
-    callback = function()
-        local root = M.get_venv() -- 设置环境变量，并返回虚拟环境目录
+function M.activate_lsp()
+     local root = M.get_venv() -- 设置环境变量，并返回虚拟环境目录
         if not root then return end
 
         if not M.lsp_started then
@@ -157,7 +154,12 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
                 M.lsp_started = true
             end
         end
-    end
+end
+vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
+    pattern = "*.py", -- 匹配Python文件
+    group = aug,
+    callback = M.activate_lsp,
+        
 })
 
 vim.api.nvim_create_user_command('RunPython', function()
