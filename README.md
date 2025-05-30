@@ -33,11 +33,9 @@ return {
     dependencies={
         "ahmedkhalf/project.nvim","neovim/nvim-lspconfig","CRAG666/betterTerm.nvim"
     },
-    -- lazy =true,
+    lazy =true,
+    event = "VeryLazy",
     patterns = { "*.py" },
-    config = function()
-        require("quick-py").setup({})
-    end
 }
 ```
 ---
