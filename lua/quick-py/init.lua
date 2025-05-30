@@ -17,17 +17,17 @@ function M.setup(user_config)
 end
 
 local function find_local_venv(start_dir)
-    local dir = start_dir or vim.fn.expand('%:p:h') -- 获取当前文件所在目录
-    if dir == '' then dir = vim.fn.getcwd() end -- 如果没有就使用当前工作目录
-    while dir and dir ~= '/' and dir ~= '' do -- 递归查找
-        for _, name in ipairs(config.venv_names) do -- 遍历设置的虚拟环境名称
-            local cand = dir .. '/' .. name -- 将虚拟环境名称与目录拼接
-            if vim.fn.isdirectory(cand) == 1 then -- 验证拼接的目录是否存在
-                return dir, cand
-            end
-        end
-        dir = vim.fn.fnamemodify(dir, ':h') -- 获取上一级目录
-    end
+    -- local dir = start_dir or vim.fn.expand('%:p:h') -- 获取当前文件所在目录
+    -- if dir == '' then dir = vim.fn.getcwd() end -- 如果没有就使用当前工作目录
+    -- while dir and dir ~= '/' and dir ~= '' do -- 递归查找
+    --     for _, name in ipairs(config.venv_names) do -- 遍历设置的虚拟环境名称
+    --         local cand = dir .. '/' .. name -- 将虚拟环境名称与目录拼接
+    --         if vim.fn.isdirectory(cand) == 1 then -- 验证拼接的目录是否存在
+    --             return dir, cand
+    --         end
+    --     end
+    --     dir = vim.fn.fnamemodify(dir, ':h') -- 获取上一级目录
+    -- end
     return nil, nil
 end
 
