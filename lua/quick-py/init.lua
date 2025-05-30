@@ -163,9 +163,9 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
 
 })
 
-vim.api.nvim_create_user_command('SetLsp',
-    M.activate_lsp(),
-    { desc = 'Activate LSP for Python' })
+-- vim.api.nvim_create_user_command('SetLsp',
+--     M.activate_lsp(),
+--     { desc = 'Activate LSP for Python' })
 vim.api.nvim_create_user_command('RunPython', function()
     if not vim.env.VIRTUAL_ENV then
         vim.notify("[Quick-py] 未找到虚拟环境", vim.log.levels.ERROR)
