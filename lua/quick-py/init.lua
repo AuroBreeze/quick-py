@@ -199,7 +199,7 @@ vim.api.nvim_create_user_command('RunPython', function()
 end, { desc = 'Run current Python file in virtualenv' })
 
 vim.keymap.set("n", "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" })
-vim.keymap.set("n", "<leader>csl", ":SetLsp<CR>", { desc = "Activate LSP for Python" })
+vim.keymap.set("n", "<leader>rl", ":SetLsp<CR>", { desc = "Activate LSP for Python" })
 
 M.setup()
 return M
