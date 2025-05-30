@@ -43,7 +43,7 @@ return {
 ### packer.nvim
 
 ```lua
-use { "AuroBreeze/quick-py", requires = { "ahmedkhalf/project.nvim", "neovim/nvim-lspconfig" } }
+use { "AuroBreeze/quick-py", requires = { "ahmedkhalf/project.nvim", "neovim/nvim-lspconfig","CRAG666/betterTerm.nvim" } }
 ```
 ## Configuration
 
