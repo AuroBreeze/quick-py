@@ -10,7 +10,7 @@
 
 `neovim-plugins`一个在`lazyvim`快速使用python的插件
 
-![](./docs/Quick-py.mp4)
+![](./docs/Quick-py.gif)
 
 ---
 
