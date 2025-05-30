@@ -160,39 +160,39 @@ vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
     end
 })
 
-vim.api.nvim_create_user_command('RunPython', function()
-    if not vim.env.VIRTUAL_ENV then
-        vim.notify("[Quick-py] 未找到虚拟环境", vim.log.levels.ERROR)
-        return
-    end
-    local cmd -- 处理自定义命令
-    if config.runserver_cmd then
-        cmd = config.runserver_cmd
-    else 
-        cmd = "python" .. ' ' .. vim.fn.shellescape(vim.fn.expand('%:p'))
-    end
-    local ok, betterTerm = pcall(require, 'betterTerm')
-    if ok then
-        -- 手动发送激活命令到终端
-        -- local venv = M.activate_venv()
-        -- if not venv then return end
+-- vim.api.nvim_create_user_command('RunPython', function()
+--     if not vim.env.VIRTUAL_ENV then
+--         vim.notify("[Quick-py] 未找到虚拟环境", vim.log.levels.ERROR)
+--         return
+--     end
+--     local cmd -- 处理自定义命令
+--     if config.runserver_cmd then
+--         cmd = config.runserver_cmd
+--     else 
+--         cmd = "python" .. ' ' .. vim.fn.shellescape(vim.fn.expand('%:p'))
+--     end
+--     local ok, betterTerm = pcall(require, 'betterTerm')
+--     if ok then
+--         -- 手动发送激活命令到终端
+--         -- local venv = M.activate_venv()
+--         -- if not venv then return end
 
-        local chan = betterTerm.open(0)
-        if not chan then
-            betterTerm.open(0) -- 如果终端未打开，先打开
-        end
-        vim.defer_fn(function()
-            betterTerm.send(cmd .. '\r',0) -- 注意加回车符
-        end, 200)
+--         local chan = betterTerm.open(0)
+--         if not chan then
+--             betterTerm.open(0) -- 如果终端未打开，先打开
+--         end
+--         vim.defer_fn(function()
+--             betterTerm.send(cmd .. '\r',0) -- 注意加回车符
+--         end, 200)
 
-        betterTerm.open(0)
-    else
-        -- 普通终端模式：直接执行（需用户手动激活环境）
-        vim.cmd('!' .. cmd)
-    end
-end, { desc = 'Run current Python file in virtualenv' })
+--         betterTerm.open(0)
+--     else
+--         -- 普通终端模式：直接执行（需用户手动激活环境）
+--         vim.cmd('!' .. cmd)
+--     end
+-- end, { desc = 'Run current Python file in virtualenv' })
 
-vim.keymap.set("n", "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" })
+-- vim.keymap.set("n", "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" })
 
 M.setup()
 return M
