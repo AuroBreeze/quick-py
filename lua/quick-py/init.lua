@@ -159,7 +159,7 @@ end
 vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, {
     pattern = "*.py", -- 匹配Python文件
     group = aug,
-    callback = M.activate_lsp,
+    callback = M.activate_lsp(),
 
 })
 
