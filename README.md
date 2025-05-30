@@ -36,6 +36,7 @@ return {
     lazy =true,
     event = "VeryLazy",
     patterns = { "*.py" },
+    -- 不要重复使用require("quick-py")否则会报错
 }
 ```
 ---
