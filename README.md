@@ -10,14 +10,12 @@
 
 `neovim-plugins`一个在`lazyvim`快速使用python的插件
 
-![](./docs/Quick-py.gif)
-
 ---
 
 ## Features
 - [x] 终端自动激活虚拟环境 `ctrl+/`或`ctrl+;`
 - [x] 使用虚拟环境的`pyright`进行代码检查
-- [x] 运行自定义命令
+- [x] 运行自定义命令(通过运行`:SetRunserverCmd`设置运行命令)
 - [x] 一键运行代码`<leader>rp`
 
 
