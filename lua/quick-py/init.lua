@@ -199,6 +199,17 @@ vim.api.nvim_create_user_command('RunPython', function()
 end, { desc = 'Run current Python file in virtualenv' })
 
 
+function M.set_runserver_cmd(cmd)
+  config.runserver_cmd = cmd
+  vim.notify("[Quick-py] 设置运行命令: " .. cmd, vim.log.levels.INFO)
+end
+
+-- 新增用户命令
+vim.api.nvim_create_user_command('SetRunserverCmd', function(opts)
+  M.set_runserver_cmd(opts.args)
+end, { nargs = 1, desc = '设置自定义 Python 运行命令' })
+
+
 
 vim.keymap.set("n", "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" })
 vim.keymap.set("n", "<leader>rl", ":SetLsp<CR>", { desc = "Set LSP for Python" })
