@@ -3,6 +3,11 @@ local config = {
     venv_names = { ".venv", "venv" },
     python_path = nil,
     runserver_cmd = nil, -- 运行自定义python命令 ，例如django： python manage.py runserver
+    -- 新增键位配置
+    keymaps = {
+        run_python = { "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" } },
+        set_lsp = { "<leader>rl", ":SetLsp<CR>", { desc = "Set LSP for Python" } },
+    }
 }
 
 M.cached_root = nil
@@ -13,7 +18,23 @@ function M.setup(user_config)
         config.venv_names = vim.list_extend(config.venv_names, user_config.venv_names)
         user_config.venv_names = nil
     end
+    
+    -- 处理用户传入的键位配置
+    if user_config and user_config.keymaps then
+        config.keymaps = vim.tbl_deep_extend("force", config.keymaps, user_config.keymaps)
+        user_config.keymaps = nil
+    end
+    
     config = vim.tbl_deep_extend("force", config, user_config or {})
+    
+    -- 应用键位映射
+    for _, keymap in pairs(config.keymaps) do
+        if type(keymap[2]) == "string" then
+            vim.keymap.set("n", keymap[1], keymap[2], keymap[3] or {})
+        elseif type(keymap[2]) == "function" then
+            vim.keymap.set("n", keymap[1], keymap[2], keymap[3] or {})
+        end
+    end
 end
 
 local function find_local_venv(start_dir)
@@ -212,9 +233,34 @@ vim.api.nvim_create_user_command('SetRunserverCmd', function(opts)
 end, { nargs = 1, desc = '设置自定义 Python 运行命令' })
 
 
+-- 新增键位设置函数
+function M.set_keymap(name, key, cmd, opts)
+    if not config.keymaps[name] then
+        vim.notify("[Quick-py] 未知的键位名称: " .. name, vim.log.levels.ERROR)
+        return
+    end
+    config.keymaps[name] = { key, cmd, opts or {} }
+    if type(cmd) == "string" then
+        vim.keymap.set("n", key, cmd, opts or {})
+    elseif type(cmd) == "function" then
+        vim.keymap.set("n", key, cmd, opts or {})
+    end
+    vim.notify("[Quick-py] 已更新键位 " .. name .. " 为 " .. key, vim.log.levels.INFO)
+end
 
-vim.keymap.set("n", "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" })
-vim.keymap.set("n", "<leader>rl", ":SetLsp<CR>", { desc = "Set LSP for Python" })
+-- 新增用户命令
+vim.api.nvim_create_user_command('SetPyKeymap', function(opts)
+    local args = vim.split(opts.args, " ", { trimempty = true })
+    if #args < 2 then
+        vim.notify("[Quick-py] 参数不足，格式: SetPyKeymap <name> <key> [cmd]", vim.log.levels.ERROR)
+        return
+    end
+    local name = args[1]
+    local key = args[2]
+    local cmd = args[3] or config.keymaps[name][2]
+    M.set_keymap(name, key, cmd, { desc = config.keymaps[name][3].desc })
+end, { nargs = "*", desc = "设置 Quick-py 键位映射" })
+
 
 M.setup()
 return M
