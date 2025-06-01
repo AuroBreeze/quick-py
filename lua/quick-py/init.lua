@@ -3,6 +3,9 @@ local config = {
     venv_names = { ".venv", "venv" },
     python_path = nil,
     runserver_cmd = nil, -- 运行自定义python命令 ，例如django： python manage.py runserver
+    lsp_config = {
+        typeCheckingMode = "basic"
+    }, -- 语言服务器配置
     -- 新增键位配置
     keymaps = {
         run_python = { "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" } },
@@ -170,7 +173,7 @@ function M.SetLsp()
                         new_config.settings = new_config.settings or {}
                         new_config.settings.python = { analysis = { pythonPath = python_venv_path } }
                         -- 关闭类型检查
-                        new_config.settings.pyright = {typeCheckingMode = "off"}
+                        new_config.settings.pyright = config.lsp_config
                     end
                 end,
             })
