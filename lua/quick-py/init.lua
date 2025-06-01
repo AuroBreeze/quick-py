@@ -148,6 +148,8 @@ function M.SetLsp()
                         new_config.cmd = { new_config.cmd[1], '--stdio' }
                         new_config.settings = new_config.settings or {}
                         new_config.settings.python = { analysis = { pythonPath = python_venv_path } }
+                        -- 关闭类型检查
+                        new_config.settings.pyright = {typeCheckingMode = "off"}
                     end
                 end,
             })
