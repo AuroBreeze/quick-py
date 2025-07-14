@@ -231,7 +231,7 @@ function M.set_runserver_cmd(cmd)
 end
 
 -- 新增用户命令
-vim.api.nvim_create_user_command('SetRunserverCmd', function(opts)
+vim.api.nvim_create_user_command('SetRunPythonCmd', function(opts)
   M.set_runserver_cmd(opts.args)
 end, { nargs = 1, desc = '设置自定义 Python 运行命令' })
 
