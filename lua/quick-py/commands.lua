@@ -46,7 +46,8 @@ function M.setup()
     if state.config.runserver_cmd then
       cmd = state.config.runserver_cmd
     else
-      cmd = 'python' .. ' ' .. vim.fn.shellescape(vim.fn.expand('%:p'))
+      local py = state.config.python_path or 'python'
+      cmd = vim.fn.shellescape(py) .. ' ' .. vim.fn.shellescape(vim.fn.expand('%:p'))
     end
     if not run_in_betterterm(cmd) then
       if not run_in_native_terminal(cmd) then
