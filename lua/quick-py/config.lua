@@ -18,7 +18,7 @@ M.defaults = {
   keymaps = {
     run_python = { "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" } },
     set_lsp = { "<leader>rl", ":SetLsp<CR>", { desc = "Set LSP for Python" } },
-    toggle_auto_activate = { "<leader>ta", ":QuickPyAutoActivate<CR>", { desc = "Toggle auto activate terminal" } },
+    toggle_auto_activate = { "<leader>ta", ":QuickPyAutoActivate<CR>", { desc = "Toggle python venv auto activate terminal" } },
   },
 }
 
