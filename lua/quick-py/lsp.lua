@@ -8,9 +8,10 @@ function M.SetLsp()
   if not state.lsp_started then
     local ok, lspconfig = pcall(require, 'lspconfig')
     if ok then
-      lspconfig.pyright.setup({
+      local success, err = pcall(lspconfig.pyright.setup, {
         cmd = (function()
           local v = vim.env.VIRTUAL_ENV
+          if not v or v == '' then return { 'pyright-langserver', '--stdio' } end
           local is_win = vim.fn.has('win32') == 1
           if is_win then v = v:gsub('/', '\\'):gsub('\\+$', '') end
           local server = is_win and (v .. '\\Scripts\\pyright-langserver.exe') or (v .. '/bin/pyright-langserver')
@@ -28,11 +29,11 @@ function M.SetLsp()
         end,
         on_new_config = function(new_config, new_root_dir)
           local v = vim.env.VIRTUAL_ENV
-          if v then
+          if v and v ~= '' then
             local is_win = vim.fn.has('win32')
             if is_win == 1 then v = v:gsub('/', '\\'):gsub('\\+$', '') end
             local python_venv_path = is_win == 1 and (v .. '\\Scripts\\python.exe') or (v .. '/bin/python')
-            if new_config.cmd and new_config.cmd[1] then
+            if type(new_config.cmd) == 'table' and new_config.cmd[1] then
               new_config.cmd = { new_config.cmd[1], '--stdio' }
             end
             new_config.settings = new_config.settings or {}
@@ -41,6 +42,10 @@ function M.SetLsp()
           end
         end,
       })
+      if not success then
+        vim.notify('[Quick-py] 配置 Pyright 失败: ' .. tostring(err), vim.log.levels.ERROR)
+        return
+      end
       state.lsp_started = true
     end
   end
