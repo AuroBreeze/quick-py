@@ -1,3 +1,30 @@
+## Quick-py v1.3.0 发布说明
+
+发布时间：2025-10-23
+
+### 变更摘要
+- 新增：可配置最大向上/向下寻找深度，默认 2。
+- 修复：Windows 根目录终端卡死问题。
+- 提升：虚拟环境发现更稳健。
+
+### 新增功能
+- 最大向上寻找深度 `max_up_depth`（默认 2）
+- 最大向下寻找深度 `max_down_depth`（默认 2）
+
+### 问题修复
+- 修复 `find_local_venv()` 在 Windows 根目录父目录等于自身时的无限循环，避免在 `TermOpen` 中卡死终端。
+
+### 配置示例
+```lua
+require('quick-py').setup({
+  venv_names = { ".venv", "venv" },
+  max_up_depth = 2,
+  max_down_depth = 2,
+})
+```
+
+---
+
 ## Quick-py v1.0.0 发布说明
 
 ### 核心功能
