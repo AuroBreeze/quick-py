@@ -3,6 +3,8 @@ local config = {
     venv_names = { ".venv", "venv" },
     python_path = nil,
     runserver_cmd = nil, -- 运行自定义python命令 ，例如django： python manage.py runserver
+    max_up_depth = 2,    -- 最大向上查找层数（含当前目录）
+    max_down_depth = 2,  -- 最大向下查找层数
     lsp_config = {
         typeCheckingMode = "basic"
     }, -- 语言服务器配置
@@ -40,17 +42,52 @@ function M.setup(user_config)
     end
 end
 
+-- 向下递归查找指定目录下的虚拟环境，受最大深度限制
+local function find_venv_downward(base_dir, current_depth, max_depth)
+    if current_depth > max_depth then return nil, nil end
+    -- 枚举子目录（尾部带分隔符）
+    local subdirs = vim.fn.globpath(base_dir, '*/', 0, 1)
+    for _, sub in ipairs(subdirs) do
+        -- 去掉末尾分隔符，统一为不以分隔符结尾
+        local dir = sub:gsub('[\\/]+$', '')
+        for _, name in ipairs(config.venv_names) do
+            local cand = dir .. '/' .. name
+            if vim.fn.isdirectory(cand) == 1 then
+                return dir, cand
+            end
+        end
+        -- 继续向下
+        local found_root, found_venv = find_venv_downward(dir, current_depth + 1, max_depth)
+        if found_root then return found_root, found_venv end
+    end
+    return nil, nil
+end
+
 local function find_local_venv(start_dir)
     local dir = start_dir or vim.fn.expand('%:p:h') -- 获取当前文件所在目录
     if dir == '' then dir = vim.fn.getcwd() end     -- 如果没有就使用当前工作目录
-    while dir and dir ~= '/' and dir ~= '' do       -- 递归查找
+    local up_steps = 0
+    while dir and dir ~= '' do                      -- 递归查找
         for _, name in ipairs(config.venv_names) do -- 遍历设置的虚拟环境名称
             local cand = dir .. '/' .. name         -- 将虚拟环境名称与目录拼接
             if vim.fn.isdirectory(cand) == 1 then   -- 验证拼接的目录是否存在
                 return dir, cand
             end
         end
-        dir = vim.fn.fnamemodify(dir, ':h') -- 获取上一级目录
+        -- 向下有限深度查找
+        if config.max_down_depth and config.max_down_depth > 0 then
+            local droot, dvenv = find_venv_downward(dir, 1, config.max_down_depth)
+            if droot then return droot, dvenv end
+        end
+        local parent = vim.fn.fnamemodify(dir, ':h') -- 获取上一级目录
+        if parent == dir or parent == '' then        -- 已到根目录（包括 Windows 情况）
+            break
+        end
+        dir = parent
+        up_steps = up_steps + 1
+        if config.max_up_depth and up_steps >= config.max_up_depth then
+            break
+        end
     end
     return nil, nil
 end
