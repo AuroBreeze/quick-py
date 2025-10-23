@@ -6,6 +6,12 @@ local config = {
     max_up_depth = 2,    -- 最大向上查找层数（含当前目录）
     max_down_depth = 2,  -- 最大向下查找层数
     auto_activate_terminal = true, -- 终端打开时自动激活虚拟环境
+    betterterm = {                 -- betterTerm 配置（健壮性增强）
+        index = 0,                 -- 默认使用第 0 号终端
+        send_delay = 200,          -- 发送命令前的延迟（毫秒）
+        focus_on_run = true,       -- 发送后是否聚焦该终端
+        open_if_closed = true,     -- 若未打开则自动打开
+    },
     lsp_config = {
         typeCheckingMode = "basic"
     }, -- 语言服务器配置
@@ -244,19 +250,28 @@ vim.api.nvim_create_user_command('RunPython', function()
     end
     local ok, betterTerm = pcall(require, 'betterTerm')
     if ok then
-        -- 手动发送激活命令到终端
-        -- local venv = M.activate_venv()
-        -- if not venv then return end
+        local idx = (config.betterterm and config.betterterm.index) or 0
+        local delay = (config.betterterm and config.betterterm.send_delay) or 200
+        local focus = (config.betterterm and config.betterterm.focus_on_run) ~= false
+        local open_first = (config.betterterm and config.betterterm.open_if_closed) ~= false
 
-        local chan = betterTerm.open(0)
-        if not chan then
-            betterTerm.open(0) -- 如果终端未打开，先打开
+        -- 确保终端存在（betterTerm.open 会在不存在时创建/打开）
+        if open_first then
+            pcall(betterTerm.open, idx)
         end
-        vim.defer_fn(function()
-            betterTerm.send(cmd .. '\r', 0) -- 注意加回车符
-        end, 200)
 
-        betterTerm.open(0)
+        -- 延迟发送命令，避免通道未就绪
+        vim.defer_fn(function()
+            local ok_send, err = pcall(betterTerm.send, cmd .. '\r', idx)
+            if not ok_send then
+                vim.notify('[Quick-py] 发送到 betterTerm 失败，回退到普通执行: ' .. tostring(err), vim.log.levels.WARN)
+                vim.cmd('!' .. cmd)
+                return
+            end
+            if focus then
+                pcall(betterTerm.open, idx)
+            end
+        end, delay)
     else
         -- 普通终端模式：直接执行（需用户手动激活环境）
         vim.cmd('!' .. cmd)
