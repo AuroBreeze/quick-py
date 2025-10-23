@@ -1,3 +1,33 @@
+## Quick-py v1.4.0 发布说明
+
+发布时间：2025-10-23
+
+### 变更摘要
+- 新增：多环境支持（Poetry/Pipenv/Conda）与多系统适配。
+- 提升：betterTerm 调用更健壮，失败时自动回退普通执行。
+- 新增：命令 `QuickPyAutoActivate` 用于控制终端自动激活开关。
+- 新增：内置 Healthcheck，支持 `:CheckHealth quick-py`。
+- 提升：`RunPython` 使用虚拟环境解释器执行并在失败时保持终端窗口不关闭。
+
+### 新增/改进
+- 多环境检测优先级（可配置）：`env_detection = { 'local', 'poetry', 'pipenv', 'conda' }`
+  - Poetry：识别 `pyproject.toml` 并通过 `poetry env info -p` 获取 venv。
+  - Pipenv：识别 `Pipfile` 并通过 `pipenv --venv` 获取 venv。
+  - Conda：优先使用 `CONDA_PREFIX`，终端激活用 `conda activate "<env>"`。
+- betterTerm 健壮性：
+  - 避免依赖返回通道；支持延迟发送、自动创建终端、发送后聚焦等。
+  - 新配置 `betterterm = { index, send_delay, focus_on_run, open_if_closed }`。
+- 终端自动激活可控：
+  - 新命令 `QuickPyAutoActivate [on|off|toggle]`。
+  - 配置项 `auto_activate_terminal` 仍可用。
+- 健康检查：
+  - `:CheckHealth quick-py` 检查 Python、Pyright、betterTerm、project.nvim 及 Shell 提示。
+
+### 其他
+- 代码重构为多模块：`config/state/util/env/lsp/terminal/commands`，`init.lua` 仅负责装配与导出接口。
+
+---
+
 ## Quick-py v1.3.0 发布说明
 
 发布时间：2025-10-23
