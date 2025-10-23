@@ -19,6 +19,7 @@
 - [x] 一键运行代码`<leader>rp`
 - [x] 可配置最大向上/向下寻找深度（`max_up_depth`/`max_down_depth`，默认 2）
 - [x] 终端自动激活可开关（`auto_activate_terminal`，默认开启；支持命令控制）
+ - [x] 多环境支持（`local`/`poetry`/`pipenv`/`conda`）与多系统适配
 
 
 ---
@@ -43,6 +44,13 @@ return {
     max_up_depth = 2,    -- 最大向上寻找深度（默认 2）
     max_down_depth = 2,  -- 最大向下寻找深度（默认 2）
     auto_activate_terminal = true, -- 终端打开时自动激活（可设为 false 关闭）
+    env_detection = { 'local', 'poetry', 'pipenv', 'conda' }, -- 环境检测优先级
+    betterterm = {
+      index = 0,            -- 目标终端编号
+      send_delay = 200,     -- 发送前延迟（毫秒）
+      focus_on_run = true,  -- 发送后聚焦终端
+      open_if_closed = true -- 未打开则自动打开
+    },
     lsp_config = {
         typeCheckingMode = "off"
     }, -- 语言服务器配置
@@ -156,6 +164,44 @@ return {
 require('quick-py').setup({
   auto_activate_terminal = true, -- 设为 false 则默认不自动注入
 })
+```
+
+### Healthcheck
+
+使用内置健康检查查看环境与依赖状态：
+
+```vim
+:CheckHealth quick-py
+```
+
+报告会检查：
+- Python（优先虚拟环境）
+- Pyright（虚拟环境/系统）
+- 可选依赖：betterTerm、project.nvim
+- 当前 Shell 与激活脚本提示
+
+### 激活脚本说明
+
+- local/poetry/pipenv 环境：
+  - Windows：执行 `"<venv>\Scripts\activate.bat"`
+  - Unix：执行 `source <venv>/bin/activate`
+- conda 环境：
+  - 发送 `conda activate "<env>"`（建议先执行 `conda init` 以确保 shell 支持）
+
+---
+
+## Module Structure
+
+```
+lua/quick-py/
+  init.lua        # 入口与编排（setup/键位/LSP 自动命令、导出接口）
+  config.lua      # 默认配置与合并逻辑
+  state.lua       # 运行时状态（缓存/配置/env 类型/LSP 状态）
+  util.lua        # 工具函数（目录查找/系统命令执行）
+  env.lua         # 环境检测与注入（local/poetry/pipenv/conda）
+  lsp.lua         # Pyright 配置绑定 venv
+  terminal.lua    # 自动命令（DirChanged/TermOpen 激活）
+  commands.lua    # 用户命令（RunPython/SetRunPythonCmd/SetPyKeymap/QuickPyAutoActivate）
 ```
 
 ---
