@@ -19,7 +19,8 @@
 - [x] 一键运行代码`<leader>rp`
 - [x] 可配置最大向上/向下寻找深度（`max_up_depth`/`max_down_depth`，默认 2）
 - [x] 终端自动激活可开关（`auto_activate_terminal`，默认开启；支持命令控制）
- - [x] 多环境支持（`local`/`poetry`/`pipenv`/`conda`）与多系统适配
+- [x] 多环境支持（`local`/`poetry`/`pipenv`/`conda`）与多系统适配
+- [x] 运行失败终端不关闭（`RunPython` 始终在终端中执行并保留窗口）
 
 
 ---
@@ -165,6 +166,13 @@ require('quick-py').setup({
   auto_activate_terminal = true, -- 设为 false 则默认不自动注入
 })
 ```
+
+### 运行行为说明（RunPython）
+
+- **使用解释器**：默认使用虚拟环境中的 Python 可执行文件（`python_path`），无需依赖终端内激活的 PATH。
+- **窗口保持**：始终在终端中执行命令并保留窗口，便于查看错误信息。
+- **优先级**：优先使用 `betterTerm`；如不可用或发送失败，自动回退到内置终端分屏。
+- **betterTerm 注意**：为避免窗口被二次 `open()` 触发 toggle 收起，发送后不再重复 `open()`；如仍有异常，可将 `betterterm.focus_on_run = false`。
 
 ### Healthcheck
 

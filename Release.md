@@ -7,6 +7,7 @@
 - 提升：betterTerm 调用更健壮，失败时自动回退普通执行。
 - 新增：命令 `QuickPyAutoActivate` 用于控制终端自动激活开关。
 - 新增：内置 Healthcheck，支持 `:CheckHealth quick-py`。
+- 提升：`RunPython` 使用虚拟环境解释器执行并在失败时保持终端窗口不关闭。
 
 ### 新增/改进
 - 多环境检测优先级（可配置）：`env_detection = { 'local', 'poetry', 'pipenv', 'conda' }`
@@ -21,6 +22,9 @@
   - 配置项 `auto_activate_terminal` 仍可用。
 - 健康检查：
   - `:CheckHealth quick-py` 检查 Python、Pyright、betterTerm、project.nvim 及 Shell 提示。
+
+### 其他
+- 代码重构为多模块：`config/state/util/env/lsp/terminal/commands`，`init.lua` 仅负责装配与导出接口。
 
 ---
 
