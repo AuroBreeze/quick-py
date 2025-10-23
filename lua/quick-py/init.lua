@@ -5,6 +5,7 @@ local config = {
     runserver_cmd = nil, -- 运行自定义python命令 ，例如django： python manage.py runserver
     max_up_depth = 2,    -- 最大向上查找层数（含当前目录）
     max_down_depth = 2,  -- 最大向下查找层数
+    auto_activate_terminal = true, -- 终端打开时自动激活虚拟环境
     lsp_config = {
         typeCheckingMode = "basic"
     }, -- 语言服务器配置
@@ -156,6 +157,7 @@ vim.api.nvim_create_autocmd('TermOpen', {
     pattern = '*',
     group = aug,
     callback = function()
+        if not config.auto_activate_terminal then return end
         local venv = M.get_venv()
         local chan = vim.b.terminal_job_id
         if venv and chan then
@@ -300,6 +302,33 @@ vim.api.nvim_create_user_command('SetPyKeymap', function(opts)
     local cmd = args[3] or config.keymaps[name][2]
     M.set_keymap(name, key, cmd, { desc = config.keymaps[name][3].desc })
 end, { nargs = "*", desc = "设置 Quick-py 键位映射" })
+
+
+-- 自动激活终端：开关/切换/查询
+function M.set_auto_activate(val)
+    if type(val) == 'boolean' then
+        config.auto_activate_terminal = val
+    else
+        config.auto_activate_terminal = not config.auto_activate_terminal
+    end
+    local state = config.auto_activate_terminal and '开启' or '关闭'
+    vim.notify('[Quick-py] 终端自动激活已' .. state, vim.log.levels.INFO)
+end
+
+vim.api.nvim_create_user_command('QuickPyAutoActivate', function(opts)
+    local arg = (opts.args or ''):lower()
+    if arg == 'on' or arg == 'enable' then
+        M.set_auto_activate(true)
+    elseif arg == 'off' or arg == 'disable' then
+        M.set_auto_activate(false)
+    elseif arg == 'toggle' or arg == '' then
+        M.set_auto_activate()
+    else
+        vim.notify('[Quick-py] 用法: QuickPyAutoActivate [on|off|toggle]', vim.log.levels.WARN)
+    end
+end, { nargs = '?', complete = function()
+    return { 'on', 'off', 'toggle' }
+end, desc = '控制终端自动激活: on/off/toggle（无参=toggle）' })
 
 
 M.setup()

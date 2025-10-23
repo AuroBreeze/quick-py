@@ -18,6 +18,7 @@
 - [x] 运行自定义命令(通过运行`:SetRunserverCmd`设置运行命令)
 - [x] 一键运行代码`<leader>rp`
 - [x] 可配置最大向上/向下寻找深度（`max_up_depth`/`max_down_depth`，默认 2）
+- [x] 终端自动激活可开关（`auto_activate_terminal`，默认开启；支持命令控制）
 
 
 ---
@@ -41,6 +42,7 @@ return {
     runserver_cmd = nil, -- 运行自定义python命令 ，例如django： python manage.py runserver
     max_up_depth = 2,    -- 最大向上寻找深度（默认 2）
     max_down_depth = 2,  -- 最大向下寻找深度（默认 2）
+    auto_activate_terminal = true, -- 终端打开时自动激活（可设为 false 关闭）
     lsp_config = {
         typeCheckingMode = "off"
     }, -- 语言服务器配置
@@ -133,6 +135,28 @@ return {
 
 > [!NOTE]
 > 请在项目文件夹下打开`nvim`，防止其他错误出现。
+
+### 控制终端自动激活
+
+你可以通过配置或命令控制是否在打开终端时自动注入虚拟环境激活脚本：
+
+```vim
+" 开启/关闭/切换
+:QuickPyAutoActivate on
+:QuickPyAutoActivate off
+:QuickPyAutoActivate toggle
+
+" 无参等同于 toggle
+:QuickPyAutoActivate
+```
+
+也可以在 setup 中设置默认行为：
+
+```lua
+require('quick-py').setup({
+  auto_activate_terminal = true, -- 设为 false 则默认不自动注入
+})
+```
 
 ---
 
