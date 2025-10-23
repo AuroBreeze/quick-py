@@ -3,6 +3,16 @@ local env = require('quick-py.env')
 local lsp = require('quick-py.lsp')
 local M = {}
 
+local function run_in_native_terminal(cmd)
+  vim.cmd('botright split | terminal')
+  local chan = vim.b.terminal_job_id
+  if not chan then return false end
+  vim.defer_fn(function()
+    vim.fn.chansend(chan, cmd .. '\r')
+  end, 100)
+  return true
+end
+
 local function run_in_betterterm(cmd)
   local ok, betterTerm = pcall(require, 'betterTerm')
   if not ok then return false end
@@ -15,8 +25,10 @@ local function run_in_betterterm(cmd)
   vim.defer_fn(function()
     local ok_send, err = pcall(betterTerm.send, cmd .. '\r', idx)
     if not ok_send then
-      vim.notify('[Quick-py] 发送到 betterTerm 失败，回退到普通执行: ' .. tostring(err), vim.log.levels.WARN)
-      vim.cmd('!' .. cmd)
+      vim.notify('[Quick-py] 发送到 betterTerm 失败，改用内置终端: ' .. tostring(err), vim.log.levels.WARN)
+      if not run_in_native_terminal(cmd) then
+        vim.notify('[Quick-py] 内置终端打开失败', vim.log.levels.ERROR)
+      end
       return
     end
     if focus then pcall(betterTerm.open, idx) end
@@ -37,7 +49,9 @@ function M.setup()
       cmd = 'python' .. ' ' .. vim.fn.shellescape(vim.fn.expand('%:p'))
     end
     if not run_in_betterterm(cmd) then
-      vim.cmd('!' .. cmd)
+      if not run_in_native_terminal(cmd) then
+        vim.notify('[Quick-py] 无法运行命令：尝试打开内置终端失败', vim.log.levels.ERROR)
+      end
     end
   end, { desc = 'Run current Python file in virtualenv' })
 
