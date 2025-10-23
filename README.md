@@ -17,6 +17,7 @@
 - [x] 使用虚拟环境的`pyright`进行代码检查
 - [x] 运行自定义命令(通过运行`:SetRunserverCmd`设置运行命令)
 - [x] 一键运行代码`<leader>rp`
+- [x] 可配置最大向上/向下寻找深度（`max_up_depth`/`max_down_depth`，默认 2）
 
 
 ---
@@ -38,6 +39,8 @@ return {
     venv_names = { ".venv", "venv" },
     python_path = nil,
     runserver_cmd = nil, -- 运行自定义python命令 ，例如django： python manage.py runserver
+    max_up_depth = 2,    -- 最大向上寻找深度（默认 2）
+    max_down_depth = 2,  -- 最大向下寻找深度（默认 2）
     lsp_config = {
         typeCheckingMode = "off"
     }, -- 语言服务器配置
@@ -63,6 +66,8 @@ config = {
     venv_names = { ".venv", "venv" },
     python_path = nil,
     runserver_cmd = nil, -- 运行自定义python命令 ，例如django： python manage.py runserver
+    max_up_depth = 2,    -- 最大向上寻找深度（默认 2）
+    max_down_depth = 2,  -- 最大向下寻找深度（默认 2）
     lsp_config = {
         typeCheckingMode = "off"
     }, -- 语言服务器配置
