@@ -21,7 +21,8 @@ local function run_in_betterterm(cmd)
   local delay = cfg.send_delay or 200
   local focus = (cfg.focus_on_run ~= false)
   local open_first = (cfg.open_if_closed ~= false)
-  if open_first then pcall(betterTerm.open, idx) end
+  -- 避免 toggle：只在发送前调用一次 open
+  if open_first or focus then pcall(betterTerm.open, idx) end
   vim.defer_fn(function()
     local ok_send, err = pcall(betterTerm.send, cmd .. '\r', idx)
     if not ok_send then
@@ -31,7 +32,7 @@ local function run_in_betterterm(cmd)
       end
       return
     end
-    if focus then pcall(betterTerm.open, idx) end
+    -- 不再次调用 open，避免二次 toggle 造成窗口被收起
   end, delay)
   return true
 end
