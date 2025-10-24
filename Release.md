@@ -9,6 +9,8 @@
 - 提升：增加防抖，避免短时间内多终端并发重复注入。
 - 提升：PATH 幂等处理与跨平台路径规范化，避免重复前置 `Scripts/bin`。
 - 文档：完善 `runserver_cmd` 使用说明，README 同步更新。
+ - 新增：Telescope 驱动的 requirements 安装器（`:QuickPyInstallReqs`）。
+ - 变更：当 `auto_activate_terminal = false` 时，跳过虚拟环境探测与 PATH 注入。
 
 ### 详情
 - 启动鲁棒性与重复激活
@@ -31,6 +33,18 @@
 - 文档
   - README 增加 `:SetRunPythonCmd` 用法与持久化/重置提示。
   - 激活脚本说明同步 PowerShell 分支与跨平台行为描述。
+  - 新增 requirements 安装器说明：支持文件预览、多选安装、快捷键 `<leader>ri`、可配置扫描（`depth_up`/`depth_down`/`excludes`/`include_all_txt`）。
+  - 标注配置项影响：`auto_activate_terminal = false` 将关闭 venv 探测与 PATH 注入，相关能力不再自动生效。
+
+### 新增：requirements 安装器（Telescope）
+- 命令：`:QuickPyInstallReqs`
+- 依赖：`nvim-telescope/telescope.nvim`、`nvim-lua/plenary.nvim`
+- 能力：
+  - 异步扫描 `requirements*.txt`（可选包含所有 `*.txt`）并展示文件预览。
+  - 选择包（支持多选）后自动使用当前 venv Python 执行 `python -m pip install`。
+  - 默认键位：`<leader>ri`。
+- 可配项（`config.requirements`）：
+  - `depth_down`、`depth_up`、`excludes`、`include_all_txt`。
 
 ---
 

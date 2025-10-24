@@ -200,6 +200,12 @@ require('quick-py').setup({
 })
 ```
 
+> [!IMPORTANT]
+> 当 `auto_activate_terminal = false` 时，插件将跳过虚拟环境探测与 PATH 注入，以降低开销。
+> 这意味着依赖 venv 探测的行为（如自动为 Pyright 绑定 venv、`RunPython` 使用 venv 解释器）将不再自动生效。
+> 如果你仅想关闭“终端内激活”而仍希望 LSP/运行继续使用 venv，请将其设为 `true`，并仅通过命令在需要时临时关闭：`:QuickPyAutoActivate off`。
+> 或者在配置中手动指定 `python_path`，或在需要时运行 `:SetLsp` 以手动配置 LSP。
+
 ### 运行行为说明（RunPython）
 
 - **使用解释器**：默认使用虚拟环境中的 Python 可执行文件（`python_path`），无需依赖终端内激活的 PATH。
