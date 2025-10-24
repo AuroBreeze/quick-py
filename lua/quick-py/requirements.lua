@@ -82,16 +82,56 @@ function M.PickAndInstall()
 
   local cwd = vim.fn.getcwd()
   local files = {}
-  scandir.scan_dir(cwd, {
-    hidden = false,
-    add_dirs = false,
-    depth = 6,
-    on_insert = function(entry)
-      if entry:lower():match('requirements.*%.txt$') or entry:lower():match('%.txt$') then
-        table.insert(files, util.normalize_path(entry))
-      end
-    end,
-  })
+  local cfg = (state.config and state.config.requirements) or {}
+  local depth_down = tonumber(cfg.depth_down) or 6
+  local depth_up = tonumber(cfg.depth_up) or 0
+  local include_all_txt = (cfg.include_all_txt ~= false)
+  local excludes = {}
+  for _, name in ipairs(cfg.excludes or {}) do excludes[name] = true end
+
+  local function is_excluded(path)
+    local p = util.normalize_path(path)
+    for seg in string.gmatch(p, "[^/\\]+") do
+      if excludes[seg] then return true end
+    end
+    return false
+  end
+
+  local function scan_once(dir)
+    scandir.scan_dir(dir, {
+      hidden = false,
+      add_dirs = false,
+      depth = depth_down,
+      respect_gitignore = true,
+      on_insert = function(entry)
+        if is_excluded(entry) then return end
+        local low = entry:lower()
+        if low:match('requirements.*%.txt$') or (include_all_txt and low:match('%.txt$')) then
+          table.insert(files, util.normalize_path(entry))
+        end
+      end,
+    })
+  end
+
+  -- 扫描 cwd 以及向上目录（最多 depth_up 层）
+  local dir = cwd
+  local up = 0
+  while dir and dir ~= '' do
+    scan_once(dir)
+    if up >= depth_up then break end
+    local parent = vim.fn.fnamemodify(dir, ':h')
+    if parent == dir or parent == '' then break end
+    dir = parent
+    up = up + 1
+  end
+
+  -- 去重
+  local uniq = {}
+  local out = {}
+  for _, f in ipairs(files) do
+    if not uniq[f] then uniq[f] = true table.insert(out, f) end
+  end
+  files = out
 
   if #files == 0 then
     vim.notify('[Quick-py] 未找到 requirements*.txt（或 *.txt）文件', vim.log.levels.WARN)
