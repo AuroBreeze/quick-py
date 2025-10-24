@@ -75,4 +75,55 @@ function M.system_list_in_dir(cmd, dir)
   return out
 end
 
+-- 规范化路径：统一分隔符并移除末尾分隔符
+function M.normalize_path(p)
+  if not p or p == '' then return p end
+  local is_win = vim.fn.has('win32') == 1
+  if is_win then
+    p = p:gsub('/', '\\')
+    p = p:gsub('\\+$', '')
+  else
+    p = p:gsub('\\', '/')
+    p = p:gsub('/+$', '')
+  end
+  return p
+end
+
+-- 简单的路径拼接（不访问文件系统）
+function M.path_join(a, b)
+  if not a or a == '' then return b end
+  if not b or b == '' then return a end
+  local is_win = vim.fn.has('win32') == 1
+  local sep = is_win and '\\' or '/'
+  a = M.normalize_path(a)
+  b = b:gsub('^[\\/]+', '')
+  return a .. sep .. b
+end
+
+-- 将目录前置到 PATH（若未存在），避免重复
+function M.prepend_env_path_once(dir)
+  if not dir or dir == '' then return false end
+  local is_win = vim.fn.has('win32') == 1
+  local sep = is_win and ';' or ':'
+  local current = vim.env.PATH or ''
+  local normdir = M.normalize_path(dir)
+  -- 拆分 PATH 并做规范化比较
+  local exists = false
+  for entry in string.gmatch(current, "[^" .. sep .. "]+") do
+    local n = M.normalize_path(entry)
+    if is_win then
+      if n:lower() == normdir:lower() then exists = true break end
+    else
+      if n == normdir then exists = true break end
+    end
+  end
+  if exists then return false end
+  if current == '' then
+    vim.env.PATH = normdir
+  else
+    vim.env.PATH = normdir .. sep .. current
+  end
+  return true
+end
+
 return M

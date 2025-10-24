@@ -24,6 +24,26 @@ local function detect_pipenv_env(start_dir)
   return nil, nil
 end
 
+local function detect_uv_env(start_dir)
+  if vim.fn.executable('uv') ~= 1 then return nil, nil end
+  -- uv 通常使用 pyproject.toml 并在项目根生成 .venv
+  local root = select(1, util.find_up_file(start_dir, { 'pyproject.toml' }))
+  if not root then return nil, nil end
+  local found_root, venv = util.find_local_venv(root)
+  if found_root and venv then return found_root, venv end
+  return nil, nil
+end
+
+local function detect_pdm_env(start_dir)
+  if vim.fn.executable('pdm') ~= 1 then return nil, nil end
+  -- pdm 也通常通过 pyproject.toml 并默认使用本地 .venv（如启用 venv backend）
+  local root = select(1, util.find_up_file(start_dir, { 'pyproject.toml' }))
+  if not root then return nil, nil end
+  local found_root, venv = util.find_local_venv(root)
+  if found_root and venv then return found_root, venv end
+  return nil, nil
+end
+
 local function detect_conda_env(_)
   local prefix = vim.env.CONDA_PREFIX
   if prefix and prefix ~= '' then
@@ -46,6 +66,10 @@ function M.get_venv()
       root_dir, venv = detect_poetry_env(buf_dir)
     elseif kind == 'pipenv' then
       root_dir, venv = detect_pipenv_env(buf_dir)
+    elseif kind == 'uv' then
+      root_dir, venv = detect_uv_env(buf_dir)
+    elseif kind == 'pdm' then
+      root_dir, venv = detect_pdm_env(buf_dir)
     elseif kind == 'conda' then
       root_dir, venv = detect_conda_env(buf_dir)
     end
@@ -77,7 +101,10 @@ function M.get_venv()
   end
 
   vim.env.VIRTUAL_ENV = venv
-  if is_win then vim.env.PATH = venv .. "\\Scripts;" .. vim.env.PATH else vim.env.PATH = venv .. "/bin:" .. vim.env.PATH end
+  local scripts_dir = is_win and (venv .. '\\Scripts') or (venv .. '/bin')
+  pcall(function()
+    util.prepend_env_path_once(scripts_dir)
+  end)
   state.config.python_path = pybin
   vim.g.python3_host_prog = pybin
   state.cached_root = root_dir

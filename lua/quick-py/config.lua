@@ -13,7 +13,7 @@ M.defaults = {
     focus_on_run = true,
     open_if_closed = true,
   },
-  env_detection = { 'local', 'poetry', 'pipenv', 'conda' },
+  env_detection = { 'local', 'poetry', 'pipenv', 'uv', 'pdm', 'conda' },
   lsp_config = { typeCheckingMode = "basic" },
   keymaps = {
     run_python = { "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" } },

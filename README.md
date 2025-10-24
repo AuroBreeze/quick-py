@@ -15,11 +15,11 @@
 ## Features
 - [x] 终端自动激活虚拟环境 `ctrl+/`或`ctrl+;`
 - [x] 使用虚拟环境的`pyright`进行代码检查
-- [x] 运行自定义命令(通过运行`:SetRunserverCmd`设置运行命令)
+- [x] 运行自定义命令（通过运行 `:SetRunPythonCmd` 设置运行命令）
 - [x] 一键运行代码`<leader>rp`
 - [x] 可配置最大向上/向下寻找深度（`max_up_depth`/`max_down_depth`，默认 2）
 - [x] 终端自动激活可开关（`auto_activate_terminal`，默认开启；支持命令控制）
-- [x] 多环境支持（`local`/`poetry`/`pipenv`/`conda`）与多系统适配
+- [x] 多环境支持（`local`/`poetry`/`pipenv`/`uv`/`pdm`/`conda`）与多系统适配
 - [x] 运行失败终端不关闭（`RunPython` 始终在终端中执行并保留窗口）
 
 
@@ -41,11 +41,16 @@ return {
     config = {
     venv_names = { ".venv", "venv" },
     python_path = nil,
+
+    -- 通过 :SetRunPythonCmd 设置自定义运行命令
     runserver_cmd = nil, -- 运行自定义python命令 ，例如django： python manage.py runserver
+
+    -- 环境寻找
     max_up_depth = 2,    -- 最大向上寻找深度（默认 2）
     max_down_depth = 2,  -- 最大向下寻找深度（默认 2）
+
     auto_activate_terminal = true, -- 终端打开时自动激活（可设为 false 关闭）
-    env_detection = { 'local', 'poetry', 'pipenv', 'conda' }, -- 环境检测优先级
+    env_detection = { 'local', 'poetry', 'pipenv', 'uv', 'pdm', 'conda' }, -- 环境检测优先级
     betterterm = {
       index = 0,            -- 目标终端编号
       send_delay = 200,     -- 发送前延迟（毫秒）
@@ -57,9 +62,9 @@ return {
     }, -- 语言服务器配置
     -- 新增键位配置
     keymaps = {
-        run_python = { "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" } },
-        set_lsp = { "<leader>rl", ":SetLsp<CR>", { desc = "Set LSP for Python" } },
-        toggle_auto_activate = { "<leader>tpa", ":QuickPyAutoActivate<CR>", { desc = "Toggle auto activate terminal" } },
+        run_python = { "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" } },  -- 一键运行代码
+        set_lsp = { "<leader>rl", ":SetLsp<CR>", { desc = "Set LSP for Python" } }, -- 设置环境LSP
+        toggle_auto_activate = { "<leader>tpa", ":QuickPyAutoActivate<CR>", { desc = "Toggle auto activate terminal" } }, -- 关闭自动激活
     }
 }
 }
@@ -175,6 +180,25 @@ require('quick-py').setup({
 - **优先级**：优先使用 `betterTerm`；如不可用或发送失败，自动回退到内置终端分屏。
 - **betterTerm 注意**：为避免窗口被二次 `open()` 触发 toggle 收起，发送后不再重复 `open()`；如仍有异常，可将 `betterterm.focus_on_run = false`。
 
+### 设置自定义运行命令（runserver_cmd）
+
+- **临时设置（当前会话有效）**：
+  ```vim
+  :SetRunPythonCmd python manage.py runserver
+  :SetRunPythonCmd uvicorn app.main:app --reload
+  :SetRunPythonCmd poetry run uvicorn app.main:app --reload
+  ```
+- **持久化设置**：在你的配置中传入 `runserver_cmd`：
+  ```lua
+  require('quick-py').setup({
+    runserver_cmd = 'python manage.py runserver',
+  })
+  ```
+- **恢复默认（取消自定义）**：
+  ```vim
+  :lua require('quick-py.state').config.runserver_cmd = nil
+  ```
+
 ### Healthcheck
 
 使用内置健康检查查看环境与依赖状态：
@@ -191,11 +215,10 @@ require('quick-py').setup({
 
 ### 激活脚本说明
 
-- local/poetry/pipenv 环境：
+- 所有环境（包括 conda）均优先直接执行环境目录内的激活脚本：
   - Windows：执行 `"<venv>\Scripts\activate.bat"`
   - Unix：执行 `source <venv>/bin/activate`
-- conda 环境：
-  - 发送 `conda activate "<env>"`（建议先执行 `conda init` 以确保 shell 支持）
+  这样避免依赖外部 shell 初始化（如 `conda init`），提高跨平台一致性。
 
 ---
 
