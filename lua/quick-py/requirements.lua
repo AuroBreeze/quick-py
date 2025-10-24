@@ -141,6 +141,7 @@ function M.PickAndInstall()
   local pickers = require('telescope.pickers')
   local finders = require('telescope.finders')
   local conf = require('telescope.config').values
+  local previewers = require('telescope.previewers')
   local actions = require('telescope.actions')
   local action_state = require('telescope.actions.state')
 
@@ -148,6 +149,7 @@ function M.PickAndInstall()
     prompt_title = '选择 requirements 文件',
     finder = finders.new_table({ results = files }),
     sorter = conf.generic_sorter({}),
+    previewer = previewers.vim_buffer_cat.new({}),
     attach_mappings = function(prompt_bufnr, map)
       local function select_file()
         local entry = action_state.get_selected_entry()
