@@ -23,6 +23,30 @@
 - [x] 运行失败终端不关闭（`RunPython` 始终在终端中执行并保留窗口）
 - [x] 基于 Telescope 的 requirements 安装器（`:QuickPyInstallReqs`）
 
+---
+
+## 注意事项
+
+> [!IMPORTANT]
+>  关闭 `auto_activate_terminal` 会跳过 venv 探测与 PATH 注入，LSP/运行将不再自动绑定 venv。
+>
+>  使用 `requirements.strategy='native'` 需安装对应工具，缺失将回退到 `python -m pip`。
+>
+>  复用终端缓冲可能不触发 TermOpen；如需复用也自动注入请考虑扩展到 `BufEnter term://*`。
+>
+>  Windows PowerShell/Pwsh 如遇执行策略限制，可临时 `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`。
+>
+>  requirements 默认仅扫描当前工作目录（`depth_up=0`）。
+>
+>  **auto_activate_terminal=false 行为**：当关闭时，插件会**跳过虚拟环境探测与 PATH 注入**，因此**不会自动为 LSP/运行命令绑定 venv**。若仅想禁用“终端自动激活”，请保持其为 `true` 并用命令临时关闭，或手动设置 `python_path`/运行 `:SetLsp`。
+>
+>  **原生命令策略依赖**：`requirements.strategy='native'` 需安装对应工具（`uv/pipenv/pdm/poetry/conda`）。缺失时将**回退到 `python -m pip`**。
+>
+>  **终端事件**：复用已有终端缓冲区可能**不会触发 `TermOpen`**。如需在复用时也自动注入，可按需扩展为在 `BufEnter term://*` 中处理（当前默认未启用）。
+>
+>  **PowerShell 执行策略**：Windows 下使用 PowerShell/Pwsh 激活脚本可能需**临时放宽执行策略**：`Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`。
+>
+>  **requirements 扫描范围**：默认**仅在当前工作目录**下扫描（`depth_up=0`），可在配置中调整。
 
 ---
 
@@ -78,6 +102,7 @@ return {
         '.pytest_cache', '.cache', 'dist', 'build', '.idea', '.vscode', '.tox',
       },
       include_all_txt = true, -- 是否包含所有 *.txt（否则仅匹配 requirements*.txt）
+      strategy = 'pip',       -- 安装策略：'pip'（统一 python -m pip）或 'native'（按 env_type 使用原生命令）
     },
 
     -- 环境检测优先级（按顺序尝试）
@@ -253,6 +278,30 @@ require('quick-py').setup({
   - 已在 `Install` 示例的 `dependencies` 中列出。
 - **快捷键**：
   - 默认提供 `<leader>ri` 触发 `:QuickPyInstallReqs`（可用 `:SetPyKeymap install_requirements <newkey>` 调整）。
+
+#### 安装策略（strategy）
+
+```lua
+require('quick-py').setup({
+  requirements = { strategy = 'pip' }, -- 'pip' | 'native'
+})
+```
+
+- 当 `strategy='pip'`（默认）：
+  - 逐包：`python -m pip install <pkg...>`
+  - 整文件：`python -m pip install -r <file>`
+- 当 `strategy='native'`：按 `env_type` 选择原生命令，失败时回退到 `pip`。
+  - `uv`：`uv pip install [...]` / `uv pip install -r <file>`
+  - `pipenv`：`pipenv install [...]` / `pipenv install -r <file>`
+  - `pdm`：`pdm add [...]` / `pdm import <file>`
+  - `poetry`：`poetry run pip install [...]` / `poetry run pip install -r <file>`
+  - `conda`：`conda run -p "<env>" pip install [...]` / `conda run -p "<env>" pip install -r <file>`
+
+> [!NOTE]
+> - `pdm import` 会将 requirements 导入 `pyproject.toml`，与 `pdm add` 语义不同。
+> - `poetry` 官方推荐 `poetry add`；本插件在 requirements 场景下使用 `poetry run pip install` 以兼容文本文件。
+> - `conda install --file` 仅支持 conda 包名，这里统一采用 `conda run ... pip install` 以兼容 PyPI 包。
+> - 若外部命令未安装（如未装 `uv/pipenv/pdm/poetry/conda`），自动回退到 `python -m pip`。
 
 #### 扫描范围配置
 

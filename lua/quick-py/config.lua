@@ -18,6 +18,7 @@ M.defaults = {
     depth_up = 0,
     excludes = { '.git', 'node_modules', '.venv', 'venv', '__pycache__', '.mypy_cache', '.pytest_cache', '.cache', 'dist', 'build', '.idea', '.vscode', '.tox' },
     include_all_txt = true,
+    strategy = 'pip', -- 'pip'（统一使用 python -m pip）或 'native'（按 env_type 使用原生命令）
   },
   env_detection = { 'local', 'poetry', 'pipenv', 'uv', 'pdm', 'conda' },
   lsp_config = { typeCheckingMode = "basic" },

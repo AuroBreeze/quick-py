@@ -43,18 +43,55 @@ local function run_cmd(cmd)
 end
 
 -- Build pip install command using current venv python if available
-local function build_pip_install_cmd(pkgs)
-  local _ = env.get_venv() -- ensure python_path is set
+local function build_install_pkgs_cmd(pkgs)
+  -- ensure python_path if needed
+  local _ = env.get_venv()
+  local strategy = (state.config and state.config.requirements and state.config.requirements.strategy) or 'pip'
+  local env_type = state.env_type
+  local function join_args(list)
+    local out = {}
+    for _, x in ipairs(list) do table.insert(out, vim.fn.shellescape(x)) end
+    return table.concat(out, ' ')
+  end
+  if strategy == 'native' then
+    if env_type == 'uv' and vim.fn.executable('uv') == 1 then
+      return table.concat({ 'uv', 'pip', 'install', join_args(pkgs) }, ' ')
+    elseif env_type == 'pipenv' and vim.fn.executable('pipenv') == 1 then
+      return table.concat({ 'pipenv', 'install', join_args(pkgs) }, ' ')
+    elseif env_type == 'pdm' and vim.fn.executable('pdm') == 1 then
+      return table.concat({ 'pdm', 'add', join_args(pkgs) }, ' ')
+    elseif env_type == 'poetry' and vim.fn.executable('poetry') == 1 then
+      return table.concat({ 'poetry', 'run', 'pip', 'install', join_args(pkgs) }, ' ')
+    elseif env_type == 'conda' and vim.fn.executable('conda') == 1 and state.cached_venv_dir then
+      return table.concat({ 'conda', 'run', '-p', vim.fn.shellescape(state.cached_venv_dir), 'pip', 'install', join_args(pkgs) }, ' ')
+    end
+    -- fallback to pip strategy
+  end
   local py = (state.config and state.config.python_path) or 'python'
-  local args = {}
-  for _, p in ipairs(pkgs) do table.insert(args, vim.fn.shellescape(p)) end
-  return table.concat({ vim.fn.shellescape(py), '-m', 'pip', 'install', table.concat(args, ' ') }, ' ')
+  return table.concat({ vim.fn.shellescape(py), '-m', 'pip', 'install', join_args(pkgs) }, ' ')
 end
 
-local function build_pip_install_file_cmd(file)
+local function build_install_file_cmd(file)
   local _ = env.get_venv()
+  local strategy = (state.config and state.config.requirements and state.config.requirements.strategy) or 'pip'
+  local env_type = state.env_type
+  local f = vim.fn.shellescape(file)
+  if strategy == 'native' then
+    if env_type == 'uv' and vim.fn.executable('uv') == 1 then
+      return table.concat({ 'uv', 'pip', 'install', '-r', f }, ' ')
+    elseif env_type == 'pipenv' and vim.fn.executable('pipenv') == 1 then
+      return table.concat({ 'pipenv', 'install', '-r', f }, ' ')
+    elseif env_type == 'pdm' and vim.fn.executable('pdm') == 1 then
+      return table.concat({ 'pdm', 'import', f }, ' ')
+    elseif env_type == 'poetry' and vim.fn.executable('poetry') == 1 then
+      return table.concat({ 'poetry', 'run', 'pip', 'install', '-r', f }, ' ')
+    elseif env_type == 'conda' and vim.fn.executable('conda') == 1 and state.cached_venv_dir then
+      return table.concat({ 'conda', 'run', '-p', vim.fn.shellescape(state.cached_venv_dir), 'pip', 'install', '-r', f }, ' ')
+    end
+    -- fallback to pip strategy
+  end
   local py = (state.config and state.config.python_path) or 'python'
-  return table.concat({ vim.fn.shellescape(py), '-m', 'pip', 'install', '-r', vim.fn.shellescape(file) }, ' ')
+  return table.concat({ vim.fn.shellescape(py), '-m', 'pip', 'install', '-r', f }, ' ')
 end
 
 local function read_lines(path)
@@ -194,9 +231,9 @@ function M.PickAndInstall()
               local has_all = false
               for _, c in ipairs(chosen) do if c == INSTALL_ALL then has_all = true break end end
               if has_all then
-                run_cmd(build_pip_install_file_cmd(path))
+                run_cmd(build_install_file_cmd(path))
               else
-                run_cmd(build_pip_install_cmd(chosen))
+                run_cmd(build_install_pkgs_cmd(chosen))
               end
             end)
             return true
