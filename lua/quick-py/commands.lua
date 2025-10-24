@@ -90,6 +90,15 @@ function M.setup()
     local state_text = state.config.auto_activate_terminal and '开启' or '关闭'
     vim.notify('[Quick-py] 终端自动激活已' .. state_text, vim.log.levels.INFO)
   end, { nargs = '?', complete = function() return { 'on', 'off', 'toggle' } end, desc = '控制终端自动激活: on/off/toggle（无参=toggle）' })
+
+  vim.api.nvim_create_user_command('QuickPyInstallReqs', function()
+    local ok, req = pcall(require, 'quick-py.requirements')
+    if not ok then
+      vim.notify('[Quick-py] 未找到 requirements 模块', vim.log.levels.ERROR)
+      return
+    end
+    req.PickAndInstall()
+  end, { desc = '使用 Telescope 选择 requirements 文件与包并安装' })
 end
 
 return M

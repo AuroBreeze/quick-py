@@ -21,6 +21,7 @@
 - [x] 终端自动激活可开关（`auto_activate_terminal`，默认开启；支持命令控制）
 - [x] 多环境支持（`local`/`poetry`/`pipenv`/`uv`/`pdm`/`conda`）与多系统适配
 - [x] 运行失败终端不关闭（`RunPython` 始终在终端中执行并保留窗口）
+- [x] 基于 Telescope 的 requirements 安装器（`:QuickPyInstallReqs`）
 
 
 ---
@@ -33,7 +34,10 @@
 return {
     "AuroBreeze/quick-py",
     dependencies={
-        "ahmedkhalf/project.nvim"
+        "ahmedkhalf/project.nvim",
+        "nvim-telescope/telescope.nvim",
+        "CRAG666/betterTerm.nvim",
+        "nvim-lua/plenary.nvim"
     },
     lazy =true,
     event = "VeryLazy",

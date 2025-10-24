@@ -1,0 +1,151 @@
+local state = require('quick-py.state')
+local env = require('quick-py.env')
+local util = require('quick-py.util')
+
+local M = {}
+
+local function run_in_native_terminal(cmd)
+  vim.cmd('botright split | terminal')
+  local chan = vim.b.terminal_job_id
+  if not chan then return false end
+  vim.defer_fn(function()
+    vim.fn.chansend(chan, cmd .. '\r')
+  end, 100)
+  return true
+end
+
+local function run_in_betterterm(cmd)
+  local ok, betterTerm = pcall(require, 'betterTerm')
+  if not ok then return false end
+  local cfg = (state.config and state.config.betterterm) or {}
+  local idx = cfg.index or 0
+  local delay = cfg.send_delay or 200
+  local focus = (cfg.focus_on_run ~= false)
+  local open_first = (cfg.open_if_closed ~= false)
+  if open_first or focus then pcall(betterTerm.open, idx) end
+  vim.defer_fn(function()
+    local ok_send = pcall(betterTerm.send, cmd .. '\r', idx)
+    if not ok_send then
+      if not run_in_native_terminal(cmd) then
+        vim.notify('[Quick-py] 无法发送命令到终端', vim.log.levels.ERROR)
+      end
+    end
+  end, delay)
+  return true
+end
+
+local function run_cmd(cmd)
+  if not run_in_betterterm(cmd) then
+    if not run_in_native_terminal(cmd) then
+      vim.notify('[Quick-py] 无法运行命令：尝试打开内置终端失败', vim.log.levels.ERROR)
+    end
+  end
+end
+
+-- Build pip install command using current venv python if available
+local function build_pip_install_cmd(pkgs)
+  local _ = env.get_venv() -- ensure python_path is set
+  local py = (state.config and state.config.python_path) or 'python'
+  local args = {}
+  for _, p in ipairs(pkgs) do table.insert(args, vim.fn.shellescape(p)) end
+  return table.concat({ vim.fn.shellescape(py), '-m', 'pip', 'install', table.concat(args, ' ') }, ' ')
+end
+
+local function read_lines(path)
+  local ok, lines = pcall(vim.fn.readfile, path)
+  if not ok then return {} end
+  return lines
+end
+
+local function parse_packages(lines)
+  local pkgs = {}
+  for _, ln in ipairs(lines) do
+    local s = vim.trim(ln)
+    if s ~= '' and not s:match('^#') then
+      table.insert(pkgs, s)
+    end
+  end
+  return pkgs
+end
+
+function M.PickAndInstall()
+  local ok_t, telescope = pcall(require, 'telescope')
+  if not ok_t then
+    vim.notify('[Quick-py] 需要安装 nvim-telescope/telescope.nvim', vim.log.levels.ERROR)
+    return
+  end
+  local ok_p, scandir = pcall(require, 'plenary.scandir')
+  if not ok_p then
+    vim.notify('[Quick-py] 需要安装 nvim-lua/plenary.nvim', vim.log.levels.ERROR)
+    return
+  end
+
+  local cwd = vim.fn.getcwd()
+  local files = {}
+  scandir.scan_dir(cwd, {
+    hidden = false,
+    add_dirs = false,
+    depth = 6,
+    on_insert = function(entry)
+      if entry:lower():match('requirements.*%.txt$') or entry:lower():match('%.txt$') then
+        table.insert(files, util.normalize_path(entry))
+      end
+    end,
+  })
+
+  if #files == 0 then
+    vim.notify('[Quick-py] 未找到 requirements*.txt（或 *.txt）文件', vim.log.levels.WARN)
+    return
+  end
+
+  local pickers = require('telescope.pickers')
+  local finders = require('telescope.finders')
+  local conf = require('telescope.config').values
+  local actions = require('telescope.actions')
+  local action_state = require('telescope.actions.state')
+
+  pickers.new({}, {
+    prompt_title = '选择 requirements 文件',
+    finder = finders.new_table({ results = files }),
+    sorter = conf.generic_sorter({}),
+    attach_mappings = function(prompt_bufnr, map)
+      local function select_file()
+        local entry = action_state.get_selected_entry()
+        actions.close(prompt_bufnr)
+        if not entry or not entry[1] then return end
+        local path = entry[1]
+        local pkgs = parse_packages(read_lines(path))
+        if #pkgs == 0 then
+          vim.notify('[Quick-py] 文件中未找到可安装的包', vim.log.levels.WARN)
+          return
+        end
+        pickers.new({}, {
+          prompt_title = '选择要安装的包',
+          finder = finders.new_table({ results = pkgs }),
+          sorter = conf.generic_sorter({}),
+          attach_mappings = function(buf2, _)
+            actions.select_default:replace(function()
+              local sel = action_state.get_selected_entry()
+              local multi = action_state.get_multi_selection()
+              local chosen = {}
+              if multi and #multi > 0 then
+                for _, e in ipairs(multi) do table.insert(chosen, e[1]) end
+              elseif sel and sel[1] then
+                table.insert(chosen, sel[1])
+              end
+              actions.close(buf2)
+              if #chosen == 0 then return end
+              local cmd = build_pip_install_cmd(chosen)
+              run_cmd(cmd)
+            end)
+            return true
+          end,
+        }):find()
+      end
+      actions.select_default:replace(select_file)
+      return true
+    end,
+  }):find()
+end
+
+return M
