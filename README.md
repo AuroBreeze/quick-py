@@ -203,6 +203,22 @@ require('quick-py').setup({
   :lua require('quick-py.state').config.runserver_cmd = nil
   ```
 
+### requirements 安装器（Telescope）
+
+- **命令**：
+  ```vim
+  :QuickPyInstallReqs
+  ```
+- **行为**：
+  - 异步扫描当前工作目录（默认深度 6）下的 `requirements*.txt` 与 `*.txt` 文件。
+  - 先选择文件，再选择要安装的包。
+  - 自动使用当前虚拟环境 Python 执行：`python -m pip install <包...>`。
+- **多选安装**：
+  - 在包列表中可使用 Telescope 多选（例如 `<Tab>` 标记多个，`<CR>` 确认）。
+- **依赖**：
+  - 需要安装 `nvim-telescope/telescope.nvim` 与 `nvim-lua/plenary.nvim`。
+  - 已在 `Install` 示例的 `dependencies` 中列出。
+
 ### Healthcheck
 
 使用内置健康检查查看环境与依赖状态：
