@@ -168,11 +168,15 @@ function M.PickAndInstall()
           attach_mappings = function(buf2, _)
             actions.select_default:replace(function()
               local sel = action_state.get_selected_entry()
-              local multi = action_state.get_multi_selection()
               local chosen = {}
-              if multi and #multi > 0 then
-                for _, e in ipairs(multi) do table.insert(chosen, e[1]) end
-              elseif sel and sel[1] then
+              local ok_picker, picker = pcall(action_state.get_current_picker, buf2)
+              if ok_picker and picker and picker.get_multi_selection then
+                local multi = picker:get_multi_selection()
+                if multi and #multi > 0 then
+                  for _, e in ipairs(multi) do table.insert(chosen, e[1]) end
+                end
+              end
+              if #chosen == 0 and sel and sel[1] then
                 table.insert(chosen, sel[1])
               end
               actions.close(buf2)
