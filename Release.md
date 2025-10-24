@@ -1,3 +1,53 @@
+## Quick-py v1.5.0 发布说明
+
+发布时间：2025-10-24
+
+### 变更摘要
+- 新增：启动顺序鲁棒性与重复激活保护。
+- 新增：环境检测扩展，支持 `uv` 与 `pdm`。
+- 提升：Windows/Conda 兼容性，统一使用环境内激活脚本；新增 PowerShell/Pwsh 专用分支。
+- 提升：增加防抖，避免短时间内多终端并发重复注入。
+- 提升：PATH 幂等处理与跨平台路径规范化，避免重复前置 `Scripts/bin`。
+- 文档：完善 `runserver_cmd` 使用说明，README 同步更新。
+ - 新增：Telescope 驱动的 requirements 安装器（`:QuickPyInstallReqs`）。
+ - 变更：当 `auto_activate_terminal = false` 时，跳过虚拟环境探测与 PATH 注入。
+
+### 详情
+- 启动鲁棒性与重复激活
+  - `TermOpen` 回调加入全局禁用开关：`vim.g.quick_py_disable_auto_activate == 1` 时跳过。
+  - 判空 `state.config`，避免在 `setup()` 之前读取默认值误触发。
+  - 缓冲区标记 `vim.b.quick_py_activated` 防止同一终端多次注入。
+- 环境检测扩展（`env.lua`）
+  - 新增 `uv`、`pdm` 检测，默认顺序更新为 `{ 'local','poetry','pipenv','uv','pdm','conda' }`。
+  - 策略：优先在项目根基于 `pyproject.toml` 查找本地 `.venv`。
+- Windows/Conda 兼容（`terminal.lua`）
+  - 统一直接执行环境目录内激活脚本：
+    - Windows：`"<venv>\\Scripts\\activate.bat"`
+    - Unix：`source "<venv>/bin/activate"`
+  - 当 shell 为 PowerShell/Pwsh 时，改为：`& "<venv>\\Scripts\\Activate.ps1"`。
+- 防抖处理（`terminal.lua`）
+  - 使用 `vim.loop.now()` 做 200ms 防抖，避免短时多次触发。
+- PATH 幂等与路径规范化（`util.lua`、`env.lua`）
+  - 新增 `normalize_path`、`path_join`、`prepend_env_path_once`。
+  - 通过 `prepend_env_path_once` 幂等地前置 `Scripts/bin`，避免重复追加。
+- 文档
+  - README 增加 `:SetRunPythonCmd` 用法与持久化/重置提示。
+  - 激活脚本说明同步 PowerShell 分支与跨平台行为描述。
+  - 新增 requirements 安装器说明：支持文件预览、多选安装、快捷键 `<leader>ri`、可配置扫描（`depth_up`/`depth_down`/`excludes`/`include_all_txt`）。
+  - 标注配置项影响：`auto_activate_terminal = false` 将关闭 venv 探测与 PATH 注入，相关能力不再自动生效。
+
+### 新增：requirements 安装器（Telescope）
+- 命令：`:QuickPyInstallReqs`
+- 依赖：`nvim-telescope/telescope.nvim`、`nvim-lua/plenary.nvim`
+- 能力：
+  - 异步扫描 `requirements*.txt`（可选包含所有 `*.txt`）并展示文件预览。
+  - 选择包（支持多选）后自动使用当前 venv Python 执行 `python -m pip install`。
+  - 默认键位：`<leader>ri`。
+- 可配项（`config.requirements`）：
+  - `depth_down`、`depth_up`、`excludes`、`include_all_txt`。
+
+---
+
 ## Quick-py v1.4.0 发布说明
 
 发布时间：2025-10-23

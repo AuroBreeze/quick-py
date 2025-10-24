@@ -13,11 +13,20 @@ M.defaults = {
     focus_on_run = true,
     open_if_closed = true,
   },
-  env_detection = { 'local', 'poetry', 'pipenv', 'conda' },
+  requirements = {
+    depth_down = 2,
+    depth_up = 0,
+    excludes = { '.git', 'node_modules', '.venv', 'venv', '__pycache__', '.mypy_cache', '.pytest_cache', '.cache', 'dist', 'build', '.idea', '.vscode', '.tox' },
+    include_all_txt = true,
+    strategy = 'pip', -- 'pip'（统一使用 python -m pip）或 'native'（按 env_type 使用原生命令）
+  },
+  env_detection = { 'local', 'poetry', 'pipenv', 'uv', 'pdm', 'conda' },
   lsp_config = { typeCheckingMode = "basic" },
   keymaps = {
     run_python = { "<leader>rp", ":RunPython<CR>", { desc = "Run Python file" } },
     set_lsp = { "<leader>rl", ":SetLsp<CR>", { desc = "Set LSP for Python" } },
+    install_requirements = { "<leader>ri", ":QuickPyInstallReqs<CR>", { desc = "Install from requirements (Telescope)" } },
+    toggle_auto_activate = { "<leader>ta", ":QuickPyAutoActivate<CR>", { desc = "Toggle python venv auto activate terminal" } },
   },
 }
 

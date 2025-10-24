@@ -17,9 +17,20 @@ function M.SetLsp()
           local server = is_win and (v .. '\\Scripts\\pyright-langserver.exe') or (v .. '/bin/pyright-langserver')
           if vim.fn.executable(server) == 1 then
             return { server, '--stdio' }
-          else
-            return { 'pyright-langserver', '--stdio' }
           end
+          -- 尝试 Mason 安装路径
+          local mason_bin = (function()
+            local d = vim.fn.stdpath('data')
+            if is_win then
+              return d .. '\\mason\\bin\\pyright-langserver.cmd'
+            else
+              return d .. '/mason/bin/pyright-langserver'
+            end
+          end)()
+          if vim.fn.executable(mason_bin) == 1 then
+            return { mason_bin, '--stdio' }
+          end
+          return { 'pyright-langserver', '--stdio' }
         end)(),
         root_dir = function(fname)
           local util = require('lspconfig.util')
