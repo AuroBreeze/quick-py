@@ -15,7 +15,7 @@ M.defaults = {
   },
   requirements = {
     depth_down = 2,
-    depth_up = 2,
+    depth_up = 0,
     excludes = { '.git', 'node_modules', '.venv', 'venv', '__pycache__', '.mypy_cache', '.pytest_cache', '.cache', 'dist', 'build', '.idea', '.vscode', '.tox' },
     include_all_txt = true,
   },

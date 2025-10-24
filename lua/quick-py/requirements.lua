@@ -51,6 +51,12 @@ local function build_pip_install_cmd(pkgs)
   return table.concat({ vim.fn.shellescape(py), '-m', 'pip', 'install', table.concat(args, ' ') }, ' ')
 end
 
+local function build_pip_install_file_cmd(file)
+  local _ = env.get_venv()
+  local py = (state.config and state.config.python_path) or 'python'
+  return table.concat({ vim.fn.shellescape(py), '-m', 'pip', 'install', '-r', vim.fn.shellescape(file) }, ' ')
+end
+
 local function read_lines(path)
   local ok, lines = pcall(vim.fn.readfile, path)
   if not ok then return {} end
@@ -161,9 +167,12 @@ function M.PickAndInstall()
           vim.notify('[Quick-py] 文件中未找到可安装的包', vim.log.levels.WARN)
           return
         end
+        local INSTALL_ALL = '[Install ALL from this file]'
+        local results = { INSTALL_ALL }
+        for _, p in ipairs(pkgs) do table.insert(results, p) end
         pickers.new({}, {
           prompt_title = '选择要安装的包',
-          finder = finders.new_table({ results = pkgs }),
+          finder = finders.new_table({ results = results }),
           sorter = conf.generic_sorter({}),
           attach_mappings = function(buf2, _)
             actions.select_default:replace(function()
@@ -181,8 +190,14 @@ function M.PickAndInstall()
               end
               actions.close(buf2)
               if #chosen == 0 then return end
-              local cmd = build_pip_install_cmd(chosen)
-              run_cmd(cmd)
+              -- 如果选择了整文件安装项，执行 -r <file>
+              local has_all = false
+              for _, c in ipairs(chosen) do if c == INSTALL_ALL then has_all = true break end end
+              if has_all then
+                run_cmd(build_pip_install_file_cmd(path))
+              else
+                run_cmd(build_pip_install_cmd(chosen))
+              end
             end)
             return true
           end,

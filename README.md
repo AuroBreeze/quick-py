@@ -72,7 +72,7 @@ return {
     -- requirements 扫描安装器（Telescope）的搜索配置
     requirements = {
       depth_down = 2,       -- 向下扫描深度（默认示例 2；推荐 6）
-      depth_up = 2,         -- 向上回溯层数（对每层目录各自向下扫描）
+      depth_up = 0,         -- 向上回溯层数（0 = 仅当前工作目录）
       excludes = {          -- 排除目录名（逐段匹配）
         '.git', 'node_modules', '.venv', 'venv', '__pycache__', '.mypy_cache',
         '.pytest_cache', '.cache', 'dist', 'build', '.idea', '.vscode', '.tox',
@@ -244,6 +244,8 @@ require('quick-py').setup({
   - 自动使用当前虚拟环境 Python 执行：`python -m pip install <包...>`。
 - **预览**：
   - 选择文件时右侧显示该 txt 文件内容（Telescope 预览器）。
+- **整文件安装**：
+  - 在包列表中提供特定项“[Install ALL from this file]”，选择后直接执行整文件安装：`python -m pip install -r <所选文件>`。
 - **多选安装**：
   - 在包列表中可使用 Telescope 多选（例如 `<Tab>` 标记多个，`<CR>` 确认）。
 - **依赖**：
