@@ -53,6 +53,9 @@ local function detect_conda_env(_)
 end
 
 function M.get_venv()
+  if state.config and state.config.auto_activate_terminal == false then
+    return nil
+  end
   if state.cached_venv_dir and vim.fn.executable(state.config.python_path) == 1 then
     return state.cached_venv_dir
   end
